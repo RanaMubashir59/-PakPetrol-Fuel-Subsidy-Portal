@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Login — PakPetrol{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <div class="auth-box">
+    <div class="auth-header">
+      <div class="logo">⛽</div>
+      <h2>Welcome Back</h2>
+      <p class="subtitle">Login to your PakPetrol account</p>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" name="username" class="form-control" placeholder="Enter your username" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+      </div>
+      {% if form.errors %}
+        <div class="alert alert-error">Invalid username or password.</div>
+      {% endif %}
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;">
+        Login →
+      </button>
+    </form>
+    <div class="divider"></div>
+    <p class="text-center text-muted" style="font-size:0.85rem;">
+      New rider? <a href="{% url 'register_rider' %}" style="color:var(--green);font-weight:500;">Register here</a>
+      &nbsp;|&nbsp;
+      <a href="{% url 'register_station' %}" style="color:var(--green);font-weight:500;">Station registration</a>
+    </p>
+    <p class="text-center mt-2" style="font-size:0.8rem;color:var(--text-muted);">
+      Admin? Use <code>/admin/</code> or superuser credentials above.
+    </p>
+  </div>
+</div>
+{% endblock %}

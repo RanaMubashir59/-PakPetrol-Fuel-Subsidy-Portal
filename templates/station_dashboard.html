@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% block title %}Station Dashboard — PakPetrol{% endblock %}
+{% block content %}
+<div class="dashboard-container">
+  <div class="page-title">⛽ {{ station.name }}</div>
+
+  {% if station.status == 'pending' %}
+  <div class="alert alert-warning" style="margin-bottom:1.5rem;">
+    ⏳ Your station is pending admin approval. You cannot process transactions yet.
+  </div>
+  {% elif station.status == 'suspended' %}
+  <div class="alert alert-error" style="margin-bottom:1.5rem;">
+    🚫 Your station has been suspended. Contact admin.
+  </div>
+  {% endif %}
+
+  <!-- Stats -->
+  <div class="stats-grid" style="margin-bottom:2rem;">
+    <div class="stat-card green">
+      <div class="stat-label">Today's Revenue</div>
+      <div class="stat-value">Rs. {{ today_total|floatformat:0 }}</div>
+      <div class="stat-icon">💰</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Litres Today</div>
+      <div class="stat-value">{{ today_litres }}L</div>
+      <div class="stat-icon">⛽</div>
+    </div>
+    <div class="stat-card dark">
+      <div class="stat-label">Transactions Today</div>
+      <div class="stat-value">{{ today_count }}</div>
+      <div class="stat-icon">📋</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label">Current Petrol Price</div>
+      <div class="stat-value">Rs. {{ current_price }}</div>
+      <div class="stat-icon">📊</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Redemption Panel -->
+    <div class="card">
+      <div class="card-header"><h3>🔍 Process Redemption</h3></div>
+
+      {% if station.status == 'active' %}
+      <div class="redeem-panel">
+        <!-- Step 1: Enter QR Token -->
+        <div id="step1" class="redeem-step active">
+          <p class="text-muted mb-2" style="font-size:0.875rem;">Enter the rider's QR token code or scan their QR image:</p>
+          <div class="form-group">
+            <label>QR Token Code</label>
+            <input type="text" id="qr-input" class="form-control" placeholder="Paste or type QR token here...">
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="verifyQR()">
+            Verify Rider →
+          </button>
+          <div id="verify-error" style="display:none;" class="alert alert-error mt-1"></div>
+        </div>
+
+        <!-- Step 2: Confirm rider + enter litres -->
+        <div id="step2" class="redeem-step">
+          <div class="rider-info-card" id="rider-info"></div>
+          <div class="form-group mt-2">
+            <label>Litres to Dispense</label>
+            <input type="number" id="litres-input" class="form-control" min="0.1" max="10" step="0.1" placeholder="e.g. 2.5">
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">Max litres based on balance: <strong id="max-litres">—</strong></p>
+          </div>
+          <div style="display:flex;gap:1rem;">
+            <button class="btn btn-outline" onclick="resetRedemption()">← Back</button>
+            <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="processRedemption()">
+              Confirm & Dispense ✓
+            </button>
+          </div>
+          <div id="process-error" style="display:none;" class="alert alert-error mt-1"></div>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div id="step3" class="redeem-step">
+          <div class="success-check">✅</div>
+          <div id="success-details" style="background:var(--green-pale);border-radius:var(--radius-sm);padding:1.2rem;font-size:0.9rem;"></div>
+          <button class="btn btn-primary mt-2" style="width:100%;justify-content:center;" onclick="resetRedemption()">
+            Process Next Transaction
+          </button>
+        </div>
+      </div>
+      {% else %}
+        <p class="text-muted text-center" style="padding:2rem;">Station must be active to process transactions.</p>
+      {% endif %}
+    </div>
+
+    <!-- Station Info -->
+    <div class="card">
+      <div class="card-header"><h3>🏪 Station Details</h3></div>
+      <table style="font-size:0.875rem;">
+        <tr><td class="text-muted" style="padding:8px 0;width:40%;">Name</td><td><strong>{{ station.name }}</strong></td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">Owner</td><td>{{ station.owner_name }}</td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">City</td><td>{{ station.city }}</td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">License No.</td><td>{{ station.license_no }}</td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">Phone</td><td>{{ station.phone }}</td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">Status</td>
+          <td>
+            {% if station.status == 'active' %}<span class="badge badge-success">Active</span>
+            {% elif station.status == 'pending' %}<span class="badge badge-warning">Pending</span>
+            {% else %}<span class="badge badge-danger">Suspended</span>{% endif %}
+          </td>
+        </tr>
+        <tr><td class="text-muted" style="padding:8px 0;">Total Transactions</td><td>{{ station.total_transactions }}</td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">Total Litres</td><td>{{ station.total_litres_dispensed|floatformat:1 }}L</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Transaction Log -->
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3>📋 Recent Transactions</h3>
+    </div>
+    {% if recent_txns %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>TXN ID</th><th>Rider</th><th>CNIC</th><th>Bike</th>
+          <th>Litres</th><th>Amount</th><th>Time</th><th>Status</th>
+        </tr></thead>
+        <tbody>
+          {% for txn in recent_txns %}
+          <tr>
+            <td><code style="font-size:0.75rem;">{{ txn.transaction_id|stringformat:'s'|slice:':10'|upper }}</code></td>
+            <td>{{ txn.bike_user.full_name }}</td>
+            <td style="font-size:0.8rem;">{{ txn.bike_user.cnic|slice:':5' }}-XXXXXXX-X</td>
+            <td>{{ txn.bike_user.bike_registration }}</td>
+            <td>{{ txn.litres_dispensed }}L</td>
+            <td>Rs. {{ txn.amount_deducted }}</td>
+            <td>{{ txn.created_at|date:"d M H:i" }}</td>
+            <td><span class="badge badge-success">{{ txn.status }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="text-muted text-center" style="padding:2rem;">No transactions yet today.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentToken = '';
+let fuelPrice = {{ current_price }};
+
+function showStep(n) {
+  document.querySelectorAll('.redeem-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+}
+
+function verifyQR() {
+  const token = document.getElementById('qr-input').value.trim();
+  if (!token) { alert('Please enter a QR token.'); return; }
+
+  const errDiv = document.getElementById('verify-error');
+  errDiv.style.display = 'none';
+
+  fetch(`{% url 'verify_qr' %}?token=${encodeURIComponent(token)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        errDiv.textContent = '⚠ ' + data.error;
+        errDiv.style.display = 'block';
+        return;
+      }
+      currentToken = token;
+      fuelPrice = parseFloat(data.fuel_price);
+      document.getElementById('rider-info').innerHTML = `
+        <div class="name">${data.rider_name}</div>
+        <div class="detail">🪪 ${data.cnic} &nbsp;|&nbsp; 🏍 ${data.bike_reg} (${data.bike_type})</div>
+        <div class="detail" style="margin-top:8px;font-size:1rem;">💰 Balance: <strong>Rs. ${data.balance}</strong> &nbsp;|&nbsp; ⛽ Max: <strong>${data.litres_possible}L</strong></div>
+      `;
+      document.getElementById('max-litres').textContent = data.litres_possible + 'L';
+      document.getElementById('litres-input').max = data.litres_possible;
+      showStep(2);
+    })
+    .catch(() => {
+      errDiv.textContent = 'Network error. Please try again.';
+      errDiv.style.display = 'block';
+    });
+}
+
+function processRedemption() {
+  const litres = parseFloat(document.getElementById('litres-input').value);
+  const errDiv = document.getElementById('process-error');
+  errDiv.style.display = 'none';
+
+  if (!litres || litres <= 0) { alert('Enter valid litres.'); return; }
+
+  fetch('{% url "process_redemption" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+    body: JSON.stringify({ token: currentToken, litres: litres })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) {
+      errDiv.textContent = '⚠ ' + data.error;
+      errDiv.style.display = 'block';
+      return;
+    }
+    document.getElementById('success-details').innerHTML = `
+      <strong>Transaction Successful!</strong><br><br>
+      🆔 TXN: <code>${data.transaction_id}</code><br>
+      👤 Rider: ${data.rider_name}<br>
+      ⛽ Litres Dispensed: <strong>${data.litres}L</strong><br>
+      💰 Amount Deducted: <strong>Rs. ${data.amount}</strong><br>
+      💳 Rider's Remaining Balance: Rs. ${data.balance_after}<br>
+      🏪 Station: ${data.station}<br>
+      🕐 Time: ${data.timestamp}
+    `;
+    showStep(3);
+  })
+  .catch(() => {
+    errDiv.textContent = 'Network error during processing.';
+    errDiv.style.display = 'block';
+  });
+}
+
+function resetRedemption() {
+  currentToken = '';
+  document.getElementById('qr-input').value = '';
+  document.getElementById('litres-input').value = '';
+  document.getElementById('verify-error').style.display = 'none';
+  document.getElementById('process-error').style.display = 'none';
+  showStep(1);
+}
+</script>
+{% endblock %}

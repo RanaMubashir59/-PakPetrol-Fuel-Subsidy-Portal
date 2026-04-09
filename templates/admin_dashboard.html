@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard — PakPetrol{% endblock %}
+{% block content %}
+<div class="dashboard-container">
+  <div class="page-title">🛡️ Admin Control Panel</div>
+
+  <!-- Top Stats -->
+  <div class="stats-grid" style="margin-bottom:2rem;">
+    <div class="stat-card green">
+      <div class="stat-label">Verified Riders</div>
+      <div class="stat-value">{{ verified_riders }}/{{ total_riders }}</div>
+      <div class="stat-icon">🛵</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Stations</div>
+      <div class="stat-value">{{ active_stations }}/{{ total_stations }}</div>
+      <div class="stat-icon">⛽</div>
+    </div>
+    <div class="stat-card dark">
+      <div class="stat-label">Total Transactions</div>
+      <div class="stat-value">{{ total_txns }}</div>
+      <div class="stat-icon">📋</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label">Total Subsidised (Rs.)</div>
+      <div class="stat-value">{{ total_amount|floatformat:0 }}</div>
+      <div class="stat-icon">💰</div>
+    </div>
+  </div>
+
+  <!-- Controls Row -->
+  <div class="grid-2" style="margin-bottom:2rem;">
+    <!-- Fuel Price Control -->
+    <div class="card">
+      <div class="card-header"><h3>📊 Fuel Price Control</h3></div>
+      <p class="text-muted mb-2" style="font-size:0.875rem;">Current petrol price: <strong>Rs. {{ current_price }}/L</strong></p>
+      <form method="post" action="{% url 'set_fuel_price' %}" style="display:flex;gap:10px;align-items:flex-end;">
+        {% csrf_token %}
+        <div class="form-group" style="flex:1;margin-bottom:0;">
+          <label>New Price (Rs. per litre)</label>
+          <input type="number" name="price" class="form-control" placeholder="e.g. 310.50" step="0.01" min="1" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Price</button>
+      </form>
+    </div>
+
+    <!-- Monthly Credit -->
+    <div class="card">
+      <div class="card-header"><h3>💳 Monthly Quota Credit</h3></div>
+      <p class="text-muted mb-2" style="font-size:0.875rem;">Credit Rs.1,500 to all active verified riders for this month. Run once per month.</p>
+      <form method="post" action="{% url 'credit_all_riders' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary" onclick="return confirm('Credit all verified riders this month?')">
+          🚀 Credit All Riders Now
+        </button>
+      </form>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px;">Will skip riders already credited this month.</p>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:2rem;">
+    <!-- Pending Riders -->
+    <div class="card">
+      <div class="card-header">
+        <h3>⏳ Pending Rider Verification</h3>
+        <span class="badge badge-warning">{{ pending_riders|length }}</span>
+      </div>
+      {% if pending_riders %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>CNIC</th><th>City</th><th>Bike</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for rider in pending_riders %}
+            <tr>
+              <td>{{ rider.full_name }}</td>
+              <td style="font-size:0.8rem;">{{ rider.cnic }}</td>
+              <td>{{ rider.city }}</td>
+              <td>{{ rider.bike_registration }}</td>
+              <td>
+                <a href="{% url 'verify_rider' rider.id %}" class="btn btn-primary btn-sm"
+                   onclick="return confirm('Verify {{ rider.full_name }}?')">Verify ✓</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <p class="text-muted text-center" style="padding:1.5rem;">No pending rider verifications.</p>
+      {% endif %}
+    </div>
+
+    <!-- Pending Stations -->
+    <div class="card">
+      <div class="card-header">
+        <h3>⏳ Pending Station Approvals</h3>
+        <span class="badge badge-warning">{{ pending_stations|length }}</span>
+      </div>
+      {% if pending_stations %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Station</th><th>City</th><th>License</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for st in pending_stations %}
+            <tr>
+              <td>{{ st.name }}<br><small class="text-muted">{{ st.owner_name }}</small></td>
+              <td>{{ st.city }}</td>
+              <td style="font-size:0.8rem;">{{ st.license_no }}</td>
+              <td>
+                <a href="{% url 'approve_station' st.id %}" class="btn btn-primary btn-sm"
+                   onclick="return confirm('Approve {{ st.name }}?')">Approve ✓</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <p class="text-muted text-center" style="padding:1.5rem;">No pending station approvals.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:2rem;">
+    <!-- City-wise Stats -->
+    <div class="card">
+      <div class="card-header"><h3>🗺️ City-wise Activity</h3></div>
+      {% if city_stats %}
+      <table>
+        <thead><tr><th>City</th><th>Transactions</th><th>Amount (Rs.)</th></tr></thead>
+        <tbody>
+          {% for c in city_stats %}
+          <tr>
+            <td>{{ c.station__city__name|default:"Unknown" }}</td>
+            <td>{{ c.count }}</td>
+            <td>{{ c.total|floatformat:0 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <p class="text-muted text-center" style="padding:1.5rem;">No transaction data yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Fraud Flags -->
+    <div class="card">
+      <div class="card-header">
+        <h3>🚨 Fraud Alerts</h3>
+        {% if fraud_flags %}<span class="badge badge-danger">{{ fraud_flags|length }}</span>{% endif %}
+      </div>
+      {% if fraud_flags %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rider</th><th>Reason</th><th>Time</th></tr></thead>
+          <tbody>
+            {% for flag in fraud_flags %}
+            <tr>
+              <td>{{ flag.bike_user.full_name }}</td>
+              <td><span class="badge badge-danger">{{ flag.get_reason_display }}</span></td>
+              <td>{{ flag.created_at|date:"d M H:i" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <p class="text-muted text-center" style="padding:1.5rem;">✅ No fraud alerts.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="card">
+    <div class="card-header"><h3>📋 Latest Transactions (System-wide)</h3></div>
+    {% if recent_txns %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>TXN ID</th><th>Rider</th><th>Station</th><th>City</th>
+          <th>Litres</th><th>Amount</th><th>Date</th><th>Status</th>
+        </tr></thead>
+        <tbody>
+          {% for txn in recent_txns %}
+          <tr>
+            <td><code style="font-size:0.75rem;">{{ txn.transaction_id|stringformat:'s'|slice:':10'|upper }}</code></td>
+            <td>{{ txn.bike_user.full_name }}</td>
+            <td>{{ txn.station.name }}</td>
+            <td>{{ txn.station.city }}</td>
+            <td>{{ txn.litres_dispensed }}L</td>
+            <td>Rs. {{ txn.amount_deducted }}</td>
+            <td>{{ txn.created_at|date:"d M Y H:i" }}</td>
+            <td><span class="badge badge-success">{{ txn.status }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="text-muted text-center" style="padding:2rem;">No transactions in the system yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

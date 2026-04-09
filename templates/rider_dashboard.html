@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}My Dashboard — PakPetrol{% endblock %}
+{% block content %}
+<div class="dashboard-container">
+  <div class="page-title">🛵 Rider Dashboard</div>
+
+  <!-- Balance Bar -->
+  <div class="balance-display">
+    <div>
+      <div class="label">Available Fuel Credit</div>
+      <div class="amount">Rs. {{ account.balance }}</div>
+      <div class="balance-meta">≈ {{ litres_available }} litres @ Rs.{{ current_price }}/L &nbsp;|&nbsp; Monthly quota: Rs.{{ account.monthly_quota }}</div>
+    </div>
+    <div style="text-align:right;">
+      {% if rider.is_verified %}
+        <span class="badge badge-success">✓ Verified</span>
+      {% else %}
+        <span class="badge badge-warning">⏳ Pending Verification</span>
+      {% endif %}
+      <div style="font-size:0.8rem;opacity:0.8;margin-top:8px;">Total redeemed: Rs.{{ account.total_redeemed }}</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- QR Generator -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📲 Generate Redemption QR</h3>
+      </div>
+      {% if rider.is_verified %}
+        <div id="qr-section">
+          <p class="text-muted mb-2" style="font-size:0.9rem;">Generate a secure QR code to redeem fuel at any registered petrol station. Valid for 10 minutes.</p>
+          <button class="btn btn-primary" onclick="generateQR()" id="gen-btn">
+            Generate QR Code
+          </button>
+          <div id="qr-display" style="display:none;margin-top:1.5rem;">
+            <div class="qr-wrapper">
+              <img id="qr-img" src="" alt="QR Code">
+              <div class="mt-2">
+                <div class="qr-timer" id="timer">10:00</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);">minutes remaining</div>
+              </div>
+              <div class="qr-token-text" id="token-display"></div>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div style="text-align:center;padding:2rem;color:var(--text-muted);">
+          <div style="font-size:3rem;">⏳</div>
+          <p>Your account is under review.<br>Admin will verify your CNIC and bike registration shortly.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Rider Info -->
+    <div class="card">
+      <div class="card-header"><h3>👤 My Profile</h3></div>
+      <table style="font-size:0.875rem;">
+        <tr><td class="text-muted" style="padding:8px 0;width:40%;">Full Name</td><td><strong>{{ rider.full_name }}</strong></td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">CNIC</td><td>{{ rider.cnic }}</td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">Phone</td><td>{{ rider.phone }}</td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">City</td><td>{{ rider.city }}</td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">Bike Reg.</td><td><strong>{{ rider.bike_registration }}</strong></td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">Bike Type</td><td>{{ rider.bike_type }}</td></tr>
+        <tr><td class="text-muted" style="padding:8px 0;">Last Credit</td><td>{{ account.last_reset|default:"Not yet credited" }}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Transaction History -->
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3>📋 Recent Transactions</h3>
+      <span class="badge badge-info">{{ recent_txns|length }} records</span>
+    </div>
+    {% if recent_txns %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Transaction ID</th><th>Station</th><th>City</th>
+            <th>Litres</th><th>Amount</th><th>Balance After</th><th>Date</th>
+          </tr></thead>
+          <tbody>
+            {% for txn in recent_txns %}
+            <tr>
+              <td><code style="font-size:0.8rem;">{{ txn.transaction_id|stringformat:'s'|slice:':12'|upper }}</code></td>
+              <td>{{ txn.station.name }}</td>
+              <td>{{ txn.station.city }}</td>
+              <td>{{ txn.litres_dispensed }}L</td>
+              <td>Rs. {{ txn.amount_deducted }}</td>
+              <td>Rs. {{ txn.balance_after }}</td>
+              <td>{{ txn.created_at|date:"d M Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted text-center" style="padding:2rem;">No transactions yet. Generate a QR code to redeem fuel.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let timerInterval = null;
+
+function generateQR() {
+  const btn = document.getElementById('gen-btn');
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+  btn.disabled = true;
+
+  fetch('{% url "generate_qr" %}')
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        alert(data.error);
+        btn.innerHTML = 'Generate QR Code';
+        btn.disabled = false;
+        return;
+      }
+      document.getElementById('qr-img').src = 'data:image/png;base64,' + data.qr_image;
+      document.getElementById('token-display').textContent = data.token;
+      document.getElementById('qr-display').style.display = 'block';
+      btn.innerHTML = '🔄 Regenerate QR';
+      btn.disabled = false;
+
+      // Start countdown
+      if (timerInterval) clearInterval(timerInterval);
+      let seconds = data.expires_in;
+      function tick() {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        document.getElementById('timer').textContent = m + ':' + s;
+        if (seconds <= 0) {
+          clearInterval(timerInterval);
+          document.getElementById('qr-display').style.display = 'none';
+          document.getElementById('timer').textContent = '00:00';
+          btn.innerHTML = 'Generate QR Code';
+          alert('QR code expired. Please generate a new one.');
+        }
+        seconds--;
+      }
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    })
+    .catch(() => {
+      btn.innerHTML = 'Generate QR Code';
+      btn.disabled = false;
+      alert('Error generating QR. Please try again.');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Register Station — PakPetrol{% endblock %}
+{% block content %}
+<div class="auth-container" style="align-items:flex-start;padding-top:2rem;">
+  <div class="auth-box" style="max-width:540px;">
+    <div class="auth-header">
+      <div class="logo">⛽</div>
+      <h2>Station Registration</h2>
+      <p class="subtitle">Register your petrol station to accept PakPetrol subsidy redemptions</p>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <p class="section-label">Account Details</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" class="form-control" placeholder="Choose username" required value="{{ form.username.value|default:'' }}">
+          {% if form.username.errors %}<p class="form-error">{{ form.username.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" class="form-control" placeholder="Email" value="{{ form.email.value|default:'' }}">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" name="confirm_password" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="section-label">Station Details</p>
+      <div class="form-group">
+        <label>Station Name</label>
+        <input type="text" name="station_name" class="form-control" placeholder="e.g. Al-Khair Petrol Station" required value="{{ form.station_name.value|default:'' }}">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Owner Full Name</label>
+          <input type="text" name="owner_name" class="form-control" required value="{{ form.owner_name.value|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" name="phone" class="form-control" placeholder="0300-XXXXXXX" required value="{{ form.phone.value|default:'' }}">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>City</label>
+          <select name="city" class="form-control" required>
+            <option value="">-- Select City --</option>
+            {% for city in form.city.field.queryset %}
+              <option value="{{ city.id }}">{{ city.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>OGRA License No.</label>
+          <input type="text" name="license_no" class="form-control" placeholder="OGRA-XXXXX" required value="{{ form.license_no.value|default:'' }}">
+          {% if form.license_no.errors %}<p class="form-error">{{ form.license_no.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Station Address</label>
+        <textarea name="address" class="form-control" rows="3" placeholder="Full address including street and area" required>{{ form.address.value|default:'' }}</textarea>
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">{{ form.non_field_errors.0 }}</div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:1rem;">
+        Submit for Approval →
+      </button>
+    </form>
+    <p class="text-center mt-2 text-muted" style="font-size:0.85rem;">
+      Already registered? <a href="{% url 'login' %}" style="color:var(--green);">Login here</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

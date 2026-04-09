@@ -1,0 +1,355 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PakPetrol — Bike Rider Fuel Subsidy Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#f5f7f2;color:#0f1a0b;overflow-x:hidden}
+a{text-decoration:none}
+
+nav{background:#0a2f13;display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;height:64px;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:#fff;display:flex;align-items:center;gap:10px}
+.nav-logo-dot{width:10px;height:10px;background:#4ade80;border-radius:50%}
+.nav-logo small{display:block;font-family:'DM Sans',sans-serif;font-weight:300;font-size:0.55rem;letter-spacing:3px;opacity:0.5;margin-top:-3px;text-transform:uppercase}
+.nav-links{display:flex;gap:4px;align-items:center}
+.nav-links a{color:rgba(255,255,255,0.65);padding:6px 14px;border-radius:6px;font-size:0.875rem;transition:.15s}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,0.08)}
+.nav-cta{background:#16a34a!important;color:#fff!important;font-weight:500}
+.nav-cta:hover{background:#15803d!important}
+
+.hero{background:#0a2f13;display:grid;grid-template-columns:1fr 1fr;min-height:520px;overflow:hidden}
+.hero-left{padding:4.5rem 2.5rem 4.5rem 3rem;display:flex;flex-direction:column;justify-content:center}
+.hero-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.22);border-radius:20px;padding:5px 14px;font-size:0.75rem;color:#4ade80;margin-bottom:1.5rem;width:fit-content}
+.pill-dot{width:6px;height:6px;background:#4ade80;border-radius:50%;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.hero h1{font-family:'Syne',sans-serif;font-size:3.2rem;font-weight:800;color:#fff;line-height:1.07;margin-bottom:1.2rem}
+.hero h1 em{font-style:normal;color:#4ade80}
+.hero-desc{color:rgba(255,255,255,0.58);font-size:1rem;line-height:1.7;max-width:400px;margin-bottom:2rem;font-weight:300}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:2rem}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;border:none;transition:.2s}
+.btn-green{background:#16a34a;color:#fff}
+.btn-green:hover{background:#15803d;transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,0.07);color:#fff;border:1px solid rgba(255,255,255,0.14)}
+.btn-ghost:hover{background:rgba(255,255,255,0.13)}
+.tech-badges{display:flex;gap:6px;flex-wrap:wrap}
+.tbadge{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:4px 10px;font-size:0.7rem;color:rgba(255,255,255,0.4)}
+
+.hero-right{background:#071f0c;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.hcircle{position:absolute;border-radius:50%;border:1px solid rgba(74,222,128,0.07)}
+.balance-card{background:#0f2d17;border:1px solid rgba(74,222,128,0.15);border-radius:16px;padding:1.5rem;width:280px;position:relative;z-index:2}
+.bc-label{font-size:0.7rem;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.38);margin-bottom:0.4rem}
+.bc-amount{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;color:#fff;margin-bottom:0.2rem}
+.bc-sub{font-size:0.8rem;color:#4ade80;margin-bottom:1.2rem}
+.bc-bar-bg{background:rgba(255,255,255,0.07);border-radius:4px;height:6px;overflow:hidden;margin-bottom:.5rem}
+.bc-bar{background:#16a34a;height:100%;border-radius:4px;width:62%;animation:grow .9s ease forwards}
+@keyframes grow{from{width:0}}
+.bc-row{display:flex;justify-content:space-between;font-size:0.75rem;color:rgba(255,255,255,0.4)}
+.bc-sep{margin:1.2rem 0 1rem;border:none;border-top:1px solid rgba(255,255,255,0.07)}
+.bc-last-lbl{font-size:0.7rem;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;margin-bottom:.5rem}
+.bc-last-row{display:flex;justify-content:space-between;font-size:0.8rem;color:rgba(255,255,255,0.65)}
+.bc-green{color:#4ade80}
+
+.ticker{background:#16a34a;padding:11px 2rem;display:flex;gap:2.5rem;overflow:hidden;white-space:nowrap}
+.ticker-item{font-size:0.8rem;color:rgba(255,255,255,.8);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.ticker-item strong{color:#fff}
+.ticker-sep{color:rgba(255,255,255,.3)}
+
+.how-section{background:#fff;padding:5rem 3rem}
+.how-inner{max-width:1100px;margin:0 auto}
+.sec-tag{font-size:.72rem;letter-spacing:2.5px;text-transform:uppercase;color:#16a34a;font-weight:500;margin-bottom:.75rem}
+.sec-h{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;color:#0f1a0b;line-height:1.15}
+.sec-h em{font-style:normal;color:#16a34a}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:3rem;position:relative}
+.steps::before{content:'';position:absolute;top:28px;left:calc(12.5% + 18px);right:calc(12.5% + 18px);height:1px;background:repeating-linear-gradient(90deg,#d1fae5 0,#d1fae5 6px,transparent 6px,transparent 12px)}
+.step{text-align:center;padding:0 1.5rem}
+.step-num{width:56px;height:56px;border-radius:50%;background:#0a2f13;color:#4ade80;font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;position:relative;z-index:1}
+.step h4{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.5rem;color:#0f1a0b}
+.step p{font-size:.85rem;color:#4a6455;line-height:1.65;font-weight:300}
+
+.stats-band{background:#0a2f13;padding:4rem 3rem}
+.stats-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;text-align:center}
+.stat .num{font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;color:#4ade80}
+.stat .lbl{font-size:.8rem;color:rgba(255,255,255,.45);margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+
+.feats-section{padding:5rem 3rem;max-width:1100px;margin:0 auto}
+.feats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem}
+.feat{background:#fff;border:1px solid #e2ead8;border-radius:14px;padding:1.8rem;transition:.2s}
+.feat:hover{border-color:#16a34a;transform:translateY(-2px);box-shadow:0 8px 24px rgba(22,163,74,.08)}
+.feat-icon{width:44px;height:44px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:1rem}
+.feat h4{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.5rem;color:#0f1a0b}
+.feat p{font-size:.85rem;color:#4a6455;line-height:1.65;font-weight:300}
+.fraud-box{background:#fff;border:1px solid #e2ead8;border-radius:14px;padding:2rem;margin-top:1.5rem}
+.fraud-box h3{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:1.2rem;color:#0f1a0b}
+.fraud-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.fraud-item{background:#f9fbf7;padding:1rem 1.2rem;border-left:3px solid #16a34a}
+.fraud-item h5{font-size:.875rem;font-weight:500;color:#0f1a0b;margin-bottom:4px}
+.fraud-item p{font-size:.8rem;color:#4a6455;font-weight:300}
+
+.roles-section{background:#fff;padding:5rem 3rem}
+.roles-inner{max-width:1100px;margin:0 auto}
+.roles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem}
+.role{border-radius:14px;padding:2rem}
+.role.rider{background:#0a2f13}
+.role.station{background:#f0fdf4;border:1px solid #bbf7d0}
+.role.admin{background:#f5f7f2;border:1px solid #d1fae5}
+.role-badge{font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;margin-bottom:1rem;display:block}
+.role.rider .role-badge{color:#4ade80}
+.role.station .role-badge{color:#15803d}
+.role.admin .role-badge{color:#166534}
+.role h3{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;margin-bottom:1rem}
+.role.rider h3{color:#fff}
+.role.station h3,.role.admin h3{color:#0f1a0b}
+.role ul{list-style:none}
+.role li{font-size:.85rem;padding:7px 0;display:flex;align-items:flex-start;gap:8px;border-bottom:1px solid rgba(255,255,255,0.07);font-weight:300}
+.role.station li,.role.admin li{border-bottom-color:rgba(0,0,0,.06);color:#4a6455}
+.role.rider li{color:rgba(255,255,255,.68)}
+.role li:last-child{border-bottom:none}
+.chk{font-size:12px;flex-shrink:0;margin-top:2px}
+.role.rider .chk{color:#4ade80}
+.role.station .chk,.role.admin .chk{color:#16a34a}
+.role-cta{display:inline-block;margin-top:1.5rem;padding:10px 20px;border-radius:7px;font-size:.875rem;font-weight:500;transition:.15s}
+.role.rider .role-cta{background:#16a34a;color:#fff}
+.role.station .role-cta,.role.admin .role-cta{background:#0a2f13;color:#fff}
+.role-cta:hover{opacity:.85}
+
+.cta-band{background:#0a2f13;padding:5rem 3rem;text-align:center}
+.cta-band h2{font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;color:#fff;margin-bottom:1rem}
+.cta-band h2 em{font-style:normal;color:#4ade80}
+.cta-band p{color:rgba(255,255,255,.5);max-width:480px;margin:0 auto 2rem;font-weight:300;line-height:1.7}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-lg{padding:14px 32px;font-size:1rem}
+
+footer{background:#071f0c;padding:2rem 3rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+footer p{font-size:.8rem;color:rgba(255,255,255,.28)}
+
+.messages-wrap{max-width:1100px;margin:.75rem auto 0;padding:0 3rem}
+.alert{padding:11px 16px;border-radius:8px;font-size:.875rem;font-weight:500;margin-bottom:6px}
+.alert-success{background:#dcfce7;color:#166534;border-left:4px solid #22c55e}
+.alert-error{background:#fee2e2;color:#991b1b;border-left:4px solid #ef4444}
+
+@media(max-width:768px){
+  .hero{grid-template-columns:1fr}
+  .hero-right{display:none}
+  .hero h1{font-size:2.2rem}
+  .steps,.stats-inner,.feats-grid,.roles-grid{grid-template-columns:1fr}
+  .steps::before{display:none}
+  .fraud-grid{grid-template-columns:1fr}
+  nav{padding:0 1rem}
+  .how-section,.stats-band,.feats-section,.roles-section,.cta-band,footer{padding:3rem 1.2rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="{% url 'home' %}">
+    <div class="nav-logo-dot"></div>
+    <div>PakPetrol<small>Fuel Subsidy Portal</small></div>
+  </a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#portals">Portals</a>
+    {% if user.is_authenticated %}
+      <a href="{% url 'dashboard' %}" class="nav-cta">Dashboard</a>
+    {% else %}
+      <a href="{% url 'login' %}">Login</a>
+      <a href="{% url 'register_rider' %}" class="nav-cta">Register Now</a>
+    {% endif %}
+  </div>
+</nav>
+
+{% if messages %}
+<div class="messages-wrap">
+  {% for msg in messages %}<div class="alert alert-{{ msg.tags }}">{{ msg }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-pill"><div class="pill-dot"></div>Government-Backed Fuel Subsidy</div>
+    <h1>Fuel credit for<br><em>every Pakistani</em><br>bike rider</h1>
+    <p class="hero-desc">Register your CNIC and motorcycle once. Receive Rs.1,500 in monthly fuel credit. Redeem instantly at any registered petrol station across Pakistan.</p>
+    <div class="hero-btns">
+      <a href="{% url 'register_rider' %}" class="btn btn-green">Register as Rider</a>
+      <a href="{% url 'login' %}" class="btn btn-ghost">Login to Portal &rarr;</a>
+    </div>
+    <div class="tech-badges">
+      <span class="tbadge">Django 4.2</span>
+      <span class="tbadge">SQLite / PostgreSQL</span>
+      <span class="tbadge">HTML + CSS + JS</span>
+      <span class="tbadge">Three-Tier Architecture</span>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hcircle" style="width:220px;height:220px;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+    <div class="hcircle" style="width:380px;height:380px;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+    <div class="hcircle" style="width:520px;height:520px;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+    <div class="balance-card">
+      <div class="bc-label">Available Credit</div>
+      <div class="bc-amount">Rs. 1,500</div>
+      <div class="bc-sub">Monthly quota &mdash; Petrol</div>
+      <div class="bc-bar-bg"><div class="bc-bar"></div></div>
+      <div class="bc-row"><span>Used: Rs. 930</span><span>Left: Rs. 570</span></div>
+      <hr class="bc-sep">
+      <div class="bc-last-lbl">Last redemption</div>
+      <div class="bc-last-row"><span>Al-Khair Station, Lahore</span><span class="bc-green">2.5L</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="ticker">
+  <div class="ticker-item"><span style="width:7px;height:7px;background:rgba(255,255,255,.4);border-radius:50%;display:inline-block"></span>Petrol Price: <strong>Rs. 305.56/L</strong></div>
+  <span class="ticker-sep">|</span>
+  <div class="ticker-item">Monthly Quota: <strong>Rs. 1,500 per rider</strong></div>
+  <span class="ticker-sep">|</span>
+  <div class="ticker-item">Coverage: <strong>15 cities across Pakistan</strong></div>
+  <span class="ticker-sep">|</span>
+  <div class="ticker-item">QR Token validity: <strong>10 minutes</strong></div>
+  <span class="ticker-sep">|</span>
+  <div class="ticker-item">Fraud protection: <strong>Multi-layer detection active</strong></div>
+</div>
+
+<section class="how-section" id="how">
+  <div class="how-inner">
+    <div class="sec-tag">Simple process</div>
+    <div class="sec-h">How it <em>works</em></div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><h4>Register with CNIC</h4><p>Submit your CNIC number, bike registration number, and personal details online</p></div>
+      <div class="step"><div class="step-num">2</div><h4>Admin verification</h4><p>Government admin verifies your identity and approves your account securely</p></div>
+      <div class="step"><div class="step-num">3</div><h4>Get monthly credit</h4><p>Rs. 1,500 is credited to your wallet automatically each month</p></div>
+      <div class="step"><div class="step-num">4</div><h4>Redeem via QR</h4><p>Generate a secure QR code and scan at any registered petrol pump</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="stats-band">
+  <div class="stats-inner">
+    <div class="stat"><div class="num">{{ stats.total_riders }}+</div><div class="lbl">Registered Riders</div></div>
+    <div class="stat"><div class="num">{{ stats.total_stations }}+</div><div class="lbl">Active Stations</div></div>
+    <div class="stat"><div class="num">{{ stats.total_transactions }}</div><div class="lbl">Redemptions</div></div>
+    <div class="stat"><div class="num">15</div><div class="lbl">Cities Covered</div></div>
+  </div>
+</div>
+
+<section class="feats-section" id="features">
+  <div class="sec-tag">Platform features</div>
+  <div class="sec-h">Everything you need in <em>one portal</em></div>
+  <div class="feats-grid">
+    <div class="feat">
+      <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="12" rx="2" stroke="#16a34a" stroke-width="1.5"/><path d="M6 16h8M10 12v4" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <h4>CNIC-based identity</h4>
+      <p>Unique 13-digit CNIC format validation ensures no duplicate registrations across the entire system.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="1.5" stroke="#16a34a" stroke-width="1.5"/><rect x="6" y="6" width="3" height="3" fill="#16a34a"/><rect x="11" y="6" width="3" height="3" fill="#16a34a"/><rect x="6" y="11" width="3" height="3" fill="#16a34a"/><rect x="11" y="11" width="3" height="3" fill="#16a34a"/></svg></div>
+      <h4>Secure QR redemption</h4>
+      <p>One-time tokens expire in 10 minutes. Cryptographically signed UUIDs that cannot be reused or forged.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#16a34a" stroke-width="1.5"/><path d="M10 7v3l2 2" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <h4>Real-time balance</h4>
+      <p>Balance deducted instantly when fuel is dispensed. Both rider and station see live confirmation.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 14l4-4 3 3 5-6" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h4>Live analytics</h4>
+      <p>City-wise transaction data, station performance, and monthly credit summaries for administrators.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10h14M10 3v14" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="7" stroke="#16a34a" stroke-width="1.5"/></svg></div>
+      <h4>Dynamic petrol pricing</h4>
+      <p>Admin updates OGRA petrol prices in real time. All redemptions calculate automatically at current rates.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3L12.5 8h5l-4 3.5 1.5 5.5L10 13.5 5 17l1.5-5.5L2.5 8h5z" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+      <h4>Fraud detection</h4>
+      <p>Automatic flagging of rapid redemptions, multi-city same-day usage, and duplicate token attempts.</p>
+    </div>
+  </div>
+  <div class="fraud-box">
+    <h3>Fraud detection rules</h3>
+    <div class="fraud-grid">
+      <div class="fraud-item"><h5>Rapid redemption check</h5><p>Flags if same rider attempts redemption within 30 minutes of a previous transaction</p></div>
+      <div class="fraud-item"><h5>Multi-city detection</h5><p>Alerts if transactions occur in two different cities on the same calendar day</p></div>
+      <div class="fraud-item"><h5>QR token reuse</h5><p>Tokens are one-time use only &mdash; any reuse attempt is immediately blocked and logged</p></div>
+      <div class="fraud-item"><h5>Balance guard</h5><p>Server-side validation prevents dispensing more fuel than the available credit balance</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="roles-section" id="portals">
+  <div class="roles-inner">
+    <div class="sec-tag">Three portals, one system</div>
+    <div class="sec-h">Built for <em>every stakeholder</em></div>
+    <div class="roles-grid">
+      <div class="role rider">
+        <span class="role-badge">For bike riders</span>
+        <h3>Rider Portal</h3>
+        <ul>
+          <li><span class="chk">&#10003;</span>Register with CNIC and bike number</li>
+          <li><span class="chk">&#10003;</span>View credit balance and full history</li>
+          <li><span class="chk">&#10003;</span>Generate 10-minute QR tokens</li>
+          <li><span class="chk">&#10003;</span>Track all redemption transactions</li>
+          <li><span class="chk">&#10003;</span>See nearby registered stations</li>
+        </ul>
+        <a href="{% url 'login' %}" class="role-cta">Rider login &rarr;</a>
+      </div>
+      <div class="role station">
+        <span class="role-badge">For petrol stations</span>
+        <h3>Station Portal</h3>
+        <ul>
+          <li><span class="chk">&#10003;</span>Verify rider QR tokens instantly</li>
+          <li><span class="chk">&#10003;</span>Process and confirm fuel dispensing</li>
+          <li><span class="chk">&#10003;</span>View daily transaction log</li>
+          <li><span class="chk">&#10003;</span>Live litres dispensed and revenue</li>
+          <li><span class="chk">&#10003;</span>Automatic fraud blocking</li>
+        </ul>
+        <a href="{% url 'login' %}" class="role-cta">Station login &rarr;</a>
+      </div>
+      <div class="role admin">
+        <span class="role-badge">For administrators</span>
+        <h3>Admin Portal</h3>
+        <ul>
+          <li><span class="chk">&#10003;</span>Verify riders and approve stations</li>
+          <li><span class="chk">&#10003;</span>Set petrol price per litre (OGRA)</li>
+          <li><span class="chk">&#10003;</span>Credit monthly quotas to all riders</li>
+          <li><span class="chk">&#10003;</span>City-wise analytics and reports</li>
+          <li><span class="chk">&#10003;</span>Manage fraud alerts and flags</li>
+        </ul>
+        <a href="{% url 'admin_dashboard' %}" class="role-cta">Admin login &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band">
+  <h2>Start riding with <em>free fuel credit</em></h2>
+  <p>Join thousands of verified bike riders across Pakistan already receiving their monthly subsidy every month.</p>
+  <div class="cta-btns">
+    <a href="{% url 'register_rider' %}" class="btn btn-green btn-lg">Register as Rider</a>
+    <a href="{% url 'register_station' %}" class="btn btn-ghost btn-lg">Register Station</a>
+  </div>
+</section>
+
+<footer>
+  <div class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    <div>PakPetrol<small>Fuel Subsidy Portal</small></div>
+  </div>
+  <p>BS Software Engineering &mdash; 4th Semester Final Project &nbsp;&middot;&nbsp; Three-Tier Architecture: HTML/CSS/JS &rarr; Django &rarr; SQLite</p>
+</footer>
+
+<script>
+document.querySelectorAll('.alert').forEach(el=>{
+  setTimeout(()=>{el.style.transition='opacity .5s';el.style.opacity='0';setTimeout(()=>el.remove(),500)},5000);
+});
+</script>
+</body>
+</html>

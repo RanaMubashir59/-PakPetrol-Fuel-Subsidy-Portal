@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="text-align:center;padding:5rem 2rem;">
+  <div style="font-size:4rem;">🤔</div>
+  <h2 style="margin:1rem 0;">No Role Assigned</h2>
+  <p style="color:var(--text-muted);">Your account doesn't have a rider or station profile. Please contact admin.</p>
+  <a href="{% url 'logout' %}" class="btn btn-primary mt-2">Logout</a>
+</div>
+{% endblock %}

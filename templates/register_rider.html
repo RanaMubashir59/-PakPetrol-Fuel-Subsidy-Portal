@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Register as Rider — PakPetrol{% endblock %}
+{% block content %}
+<div class="auth-container" style="align-items:flex-start;padding-top:2rem;">
+  <div class="auth-box" style="max-width:540px;">
+    <div class="auth-header">
+      <div class="logo">🛵</div>
+      <h2>Rider Registration</h2>
+      <p class="subtitle">Register your motorcycle and CNIC to receive monthly fuel credits</p>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+
+      <p class="section-label">Account Details</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" class="form-control" placeholder="Choose username" required
+            value="{{ form.username.value|default:'' }}">
+          {% if form.username.errors %}<p class="form-error">{{ form.username.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" class="form-control" placeholder="Email address"
+            value="{{ form.email.value|default:'' }}">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" class="form-control" placeholder="Password" required>
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" name="confirm_password" class="form-control" placeholder="Repeat password" required>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="section-label">Personal Information</p>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="full_name" class="form-control" placeholder="As per CNIC" required
+          value="{{ form.full_name.value|default:'' }}">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>CNIC Number</label>
+          <input type="text" name="cnic" class="form-control" placeholder="12345-1234567-1" required
+            value="{{ form.cnic.value|default:'' }}">
+          {% if form.cnic.errors %}<p class="form-error">{{ form.cnic.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" name="phone" class="form-control" placeholder="0300-1234567" required
+            value="{{ form.phone.value|default:'' }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>City</label>
+        <select name="city" class="form-control" required>
+          <option value="">-- Select City --</option>
+          {% for city in form.city.field.queryset %}
+            <option value="{{ city.id }}" {% if form.city.value == city.id|stringformat:'s' %}selected{% endif %}>{{ city.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="divider"></div>
+      <p class="section-label">Bike Information</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Bike Registration No.</label>
+          <input type="text" name="bike_registration" class="form-control" placeholder="LHR-1234" required
+            value="{{ form.bike_registration.value|default:'' }}">
+          {% if form.bike_registration.errors %}<p class="form-error">{{ form.bike_registration.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>Bike Engine Type</label>
+          <select name="bike_type" class="form-control">
+            <option value="100cc">100cc</option>
+            <option value="125cc" selected>125cc</option>
+            <option value="150cc">150cc</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">{{ form.non_field_errors.0 }}</div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:1rem;">
+        Submit Registration →
+      </button>
+    </form>
+    <p class="text-center mt-2 text-muted" style="font-size:0.85rem;">
+      Already registered? <a href="{% url 'login' %}" style="color:var(--green);">Login here</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

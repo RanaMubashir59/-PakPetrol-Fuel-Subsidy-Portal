@@ -1,0 +1,1 @@
+default_app_config = 'Maddy.apps.MaddyConfig'
