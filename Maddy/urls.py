@@ -8,6 +8,7 @@ path('', views.home, name='home'),
     path('register/station/', views.register_station, name='register_station'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('survey/', views.survey_view, name='survey'),
     path('dashboard/', views.dashboard, name='dashboard'),
 
     # Rider

@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}Survey — PakPetrol{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="padding:2rem 1rem;">
+  <div class="auth-box" style="max-width:1040px; margin:0 auto;">
+    <div class="auth-header" style="margin-bottom:1.5rem;">
+      <div class="logo">📋</div>
+      <h2>PakPetrol Survey</h2>
+      <p class="subtitle">Please complete the survey below and help us improve fuel subsidy delivery.</p>
+    </div>
+
+    {% if messages %}
+      <div class="messages-container" style="margin-bottom:1rem;">
+        {% for msg in messages %}
+          <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" style="display:grid;gap:1rem;">
+      {% csrf_token %}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Full Name</label>
+          {{ form.name }}
+          {% for error in form.name.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          {{ form.age }}
+          {% for error in form.age.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Gender</label>
+          {{ form.gender }}
+          {% for error in form.gender.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          {{ form.city }}
+          {% for error in form.city.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Occupation</label>
+        {{ form.occupation }}
+        {% for error in form.occupation.errors %}
+          <span class="form-error">{{ error }}</span>
+        {% endfor %}
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Monthly Fuel Usage (Litres)</label>
+          {{ form.monthly_fuel_litres }}
+          {% for error in form.monthly_fuel_litres.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Weekly Distance Travelled (km)</label>
+          {{ form.weekly_distance_km }}
+          {% for error in form.weekly_distance_km.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Did you receive fuel subsidy?</label>
+          {{ form.subsidy_received }}
+          {% for error in form.subsidy_received.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Subsidy Amount Received (PKR)</label>
+          {{ form.subsidy_amount }}
+          {% for error in form.subsidy_amount.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Satisfaction Rating</label>
+        {{ form.satisfaction_rating }}
+        {% for error in form.satisfaction_rating.errors %}
+          <span class="form-error">{{ error }}</span>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label>Additional Comments</label>
+        {{ form.comments }}
+        {% for error in form.comments.errors %}
+          <span class="form-error">{{ error }}</span>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="max-width:260px;">Submit Survey</button>
+    </form>
+
+    <div class="survey-summary" style="margin-top:2rem; padding:1.5rem; border:1px solid #d9e8d6; border-radius:16px; background:#f8faf5;">
+      <h3>Survey Snapshot</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem; margin-top:1rem;">
+        <div style="padding:1rem; background:#fff; border-radius:12px;">
+          <p class="stat-label">Total Responses</p>
+          <p class="stat-value" style="font-size:2rem; font-weight:700; margin:0;">{{ stats.total_responses }}</p>
+        </div>
+        <div style="padding:1rem; background:#fff; border-radius:12px;">
+          <p class="stat-label">Avg Fuel Use (L/month)</p>
+          <p class="stat-value" style="font-size:2rem; font-weight:700; margin:0;">{{ stats.avg_monthly_fuel }}</p>
+        </div>
+        <div style="padding:1rem; background:#fff; border-radius:12px;">
+          <p class="stat-label">Avg Weekly Distance (km)</p>
+          <p class="stat-value" style="font-size:2rem; font-weight:700; margin:0;">{{ stats.avg_weekly_distance }}</p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem; margin-top:1rem;">
+        <div style="padding:1rem; background:#fff; border-radius:12px;">
+          <p class="stat-label">Avg Satisfaction</p>
+          <p class="stat-value" style="font-size:2rem; font-weight:700; margin:0;">{{ stats.avg_satisfaction }}</p>
+        </div>
+        <div style="padding:1rem; background:#fff; border-radius:12px;">
+          <p class="stat-label">Total Subsidy Collected</p>
+          <p class="stat-value" style="font-size:2rem; font-weight:700; margin:0;">{{ stats.total_subsidy }}</p>
+        </div>
+        <div style="padding:1rem; background:#fff; border-radius:12px;">
+          <p class="stat-label">Subsidy Reach</p>
+          <p class="stat-value" style="font-size:2rem; font-weight:700; margin:0;">{{ stats.subsidy_percent }}%</p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem; margin-top:1rem;">
+        <div style="padding:1rem; background:#fff; border-radius:12px;">
+          <h4>Gender Breakdown</h4>
+          <ul style="list-style:none; padding:0; margin:0;">
+            {% for item in gender_breakdown %}
+              <li>{{ item.gender|title }}: {{ item.count }}</li>
+            {% empty %}
+              <li>No responses yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div style="padding:1rem; background:#fff; border-radius:12px;">
+          <h4>Top Cities</h4>
+          <ul style="list-style:none; padding:0; margin:0;">
+            {% for item in city_breakdown %}
+              <li>{{ item.city__name|default:'Unknown' }}: {{ item.count }}</li>
+            {% empty %}
+              <li>No responses yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

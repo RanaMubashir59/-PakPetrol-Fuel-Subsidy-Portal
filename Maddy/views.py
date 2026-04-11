@@ -5,17 +5,17 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Avg
 from django.views.decorators.http import require_POST
 import json, qrcode, io, base64
 
 from .models import (
     BikeUser, PetrolStation, CreditAccount, QRToken,
-    Transaction, FuelPrice, City, FraudFlag
+    Transaction, FuelPrice, City, FraudFlag, SurveyResponse
 )
 from .forms import (
     BikeUserRegistrationForm, StationRegistrationForm,
-    RedemptionForm, LoginForm
+    RedemptionForm, LoginForm, SurveyForm
 )
 
 
@@ -89,6 +89,42 @@ def home(request):
         'total_transactions': Transaction.objects.filter(status='success').count(),
     }
     return render(request, 'home.html', {'stats': stats})
+
+
+def survey_view(request):
+    form = SurveyForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Thank you for sharing your feedback.')
+        return redirect('survey')
+
+    responses = SurveyResponse.objects.all()
+    agg = responses.aggregate(
+        avg_monthly_fuel=Avg('monthly_fuel_litres'),
+        avg_weekly_distance=Avg('weekly_distance_km'),
+        avg_satisfaction=Avg('satisfaction_rating'),
+        total_subsidy=Sum('subsidy_amount'),
+    )
+    total = responses.count()
+    subsidy_received_count = responses.filter(subsidy_received=True).count()
+
+    stats = {
+        'total_responses': total,
+        'avg_monthly_fuel': round(float(agg['avg_monthly_fuel'] or 0), 2),
+        'avg_weekly_distance': round(float(agg['avg_weekly_distance'] or 0), 2),
+        'avg_satisfaction': round(float(agg['avg_satisfaction'] or 0), 2),
+        'total_subsidy': round(float(agg['total_subsidy'] or 0), 2),
+        'subsidy_percent': round((subsidy_received_count / total) * 100) if total else 0,
+    }
+    gender_breakdown = responses.values('gender').annotate(count=Count('id'))
+    city_breakdown = responses.values('city__name').annotate(count=Count('id')).order_by('-count')[:5]
+
+    return render(request, 'Survey.html', {
+        'form': form,
+        'stats': stats,
+        'gender_breakdown': gender_breakdown,
+        'city_breakdown': city_breakdown,
+    })
 
 
 def register_rider(request):

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     City, FuelPrice, PetrolStation, BikeUser, CreditAccount,
-    QRToken, Transaction, FraudFlag
+    QRToken, Transaction, FraudFlag, SurveyResponse
 )
 
 @admin.register(City)

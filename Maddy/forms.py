@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
-from .models import BikeUser, PetrolStation, City
+from .models import BikeUser, PetrolStation, City, SurveyResponse
 import re
 
 
@@ -86,6 +86,39 @@ class RedemptionForm(forms.Form):
     def clean_qr_token(self):
         token = self.cleaned_data['qr_token'].strip()
         return token
+
+
+class SurveyForm(forms.ModelForm):
+    class Meta:
+        model = SurveyResponse
+        fields = [
+            'name', 'age', 'gender', 'city', 'occupation',
+            'monthly_fuel_litres', 'weekly_distance_km',
+            'subsidy_received', 'subsidy_amount',
+            'satisfaction_rating', 'comments',
+        ]
+        widgets = {
+            'comments': forms.Textarea(attrs={'rows': 4}),
+            'gender': forms.RadioSelect,
+            'subsidy_received': forms.RadioSelect(choices=[(True, 'Yes'), (False, 'No')]),
+        }
+        labels = {
+            'monthly_fuel_litres': 'Monthly Fuel Usage (litres)',
+            'weekly_distance_km': 'Weekly Distance Travelled (km)',
+            'subsidy_received': 'Did you receive fuel subsidy?',
+            'subsidy_amount': 'Subsidy Amount Received (PKR)',
+            'satisfaction_rating': 'Satisfaction Rating',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        subsidy_received = cleaned_data.get('subsidy_received')
+        subsidy_amount = cleaned_data.get('subsidy_amount')
+        if subsidy_received and not subsidy_amount:
+            self.add_error('subsidy_amount', 'Please enter the subsidy amount received.')
+        if not subsidy_received:
+            cleaned_data['subsidy_amount'] = None
+        return cleaned_data
 
 
 class LoginForm(AuthenticationForm):

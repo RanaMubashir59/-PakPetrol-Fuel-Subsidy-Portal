@@ -34,6 +34,34 @@ class FuelPrice(models.Model):
         return obj.price_per_litre if obj else 300.00
 
 
+class SurveyResponse(models.Model):
+    GENDER_CHOICES = [
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('other', 'Other'),
+    ]
+    SATISFACTION_CHOICES = [(i, str(i)) for i in range(1, 6)]
+
+    name = models.CharField(max_length=150)
+    age = models.PositiveIntegerField(null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='other')
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, blank=True)
+    occupation = models.CharField(max_length=100, blank=True)
+    monthly_fuel_litres = models.DecimalField(max_digits=8, decimal_places=2)
+    weekly_distance_km = models.DecimalField(max_digits=8, decimal_places=2)
+    subsidy_received = models.BooleanField(default=False)
+    subsidy_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    satisfaction_rating = models.PositiveSmallIntegerField(choices=SATISFACTION_CHOICES, default=3)
+    comments = models.TextField(blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+
+    def __str__(self):
+        return f"Survey: {self.name} ({self.submitted_at.date()})"
+
+
 class PetrolStation(models.Model):
     STATUS = [('pending', 'Pending'), ('active', 'Active'), ('suspended', 'Suspended')]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='station')
