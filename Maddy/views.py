@@ -144,6 +144,10 @@ def logout_view(request):
     return redirect('home')
 
 
+def survey_view(request):
+    return render(request, 'Survey.html')
+
+
 # ─── Dashboard Router ─────────────────────────────────────────────────────────
 
 @login_required
