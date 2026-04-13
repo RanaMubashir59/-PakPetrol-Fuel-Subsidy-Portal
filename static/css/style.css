@@ -346,3 +346,616 @@ footer {
   animation: popIn 0.4s ease;
 }
 @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+/* ─── ANALYTICS DASHBOARD ────────────────────────────────────────────────────── */
+.analytics-page {
+  max-width: 1400px; margin: 0 auto; padding: 2rem;
+}
+
+.analytics-intro {
+  background: var(--white-pure);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+}
+
+.analytics-intro h1 {
+  font-size: 2rem; font-weight: 700; color: var(--green-dark); margin-bottom: 1rem;
+}
+
+.analytics-intro p {
+  margin-bottom: 1rem; color: var(--text-muted); line-height: 1.8;
+}
+
+.analytics-intro code {
+  background: #f1f5f9; padding: 2px 6px; border-radius: 4px;
+  color: #d97706; font-size: 0.85rem; font-weight: 500;
+}
+
+.analytics-upload-form {
+  display: flex; gap: 1rem; align-items: flex-end;
+  margin: 1.5rem 0; flex-wrap: wrap;
+}
+
+.analytics-upload-form label {
+  display: block; font-weight: 500; margin-bottom: 4px; font-size: 0.9rem;
+}
+
+.analytics-upload-form input[type="file"] {
+  padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 6px;
+  cursor: pointer; font-size: 0.9rem;
+}
+
+.analytics-upload-form button {
+  padding: 10px 20px; background: var(--green); color: white;
+  border: none; border-radius: 6px; cursor: pointer; font-weight: 500;
+  transition: background 0.2s;
+}
+
+.analytics-upload-form button:hover {
+  background: var(--green-light);
+}
+
+.analytics-controls {
+  background: var(--white-pure);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 1rem;
+}
+
+#refreshButton {
+  padding: 10px 24px; background: var(--green); color: white;
+  border: none; border-radius: 6px; cursor: pointer;
+  font-weight: 500; transition: all 0.2s;
+}
+
+#refreshButton:hover {
+  background: var(--green-light); transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(11, 110, 47, 0.25);
+}
+
+#lastUpdated {
+  font-size: 0.9rem; color: var(--text-muted);
+}
+
+.status {
+  padding: 12px 16px; border-radius: 6px; font-weight: 500;
+  font-size: 0.9rem; border-left: 4px solid;
+}
+
+.status.info {
+  background: #f0f9ff; border-left-color: #3b82f6; color: #1e40af;
+}
+
+.status.success {
+  background: #f0fdf4; border-left-color: #22c55e; color: #166534;
+}
+
+.status.error {
+  background: #fef2f2; border-left-color: #ef4444; color: #991b1b;
+}
+
+.analytics-charts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 2rem; margin-bottom: 2rem;
+}
+
+.chart-card {
+  background: var(--white-pure);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  transition: all 0.3s;
+}
+
+.chart-card:hover {
+  box-shadow: 0 8px 24px rgba(11, 110, 47, 0.15);
+}
+
+.chart-card h2 {
+  font-size: 1.1rem; font-weight: 600; color: var(--green-dark);
+  margin-bottom: 1rem; padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--green-pale);
+}
+
+.chart-card h3 {
+  font-size: 1rem; font-weight: 600; color: var(--green); margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.chart-card p {
+  color: var(--text-muted); font-size: 0.9rem; padding: 1rem;
+  text-align: center; background: var(--green-pale); border-radius: 6px;
+}
+
+.chart-card .plotly {
+  min-height: 300px;
+}
+
+#demographicsCharts {
+  grid-column: 1 / -1;
+}
+
+#demographicsCharts .chart-card {
+  display: inline-block; width: calc(20% - 1.6rem);
+  margin-right: 2rem; vertical-align: top;
+}
+
+#demographicsCharts .chart-card:nth-child(5n) {
+  margin-right: 0;
+}
+
+#regressionChart,
+#groupComparisonChart {
+  grid-column: span 1;
+}
+
+#productivityChart,
+#awarenessChart,
+#perceptionChart {
+  grid-column: span 1;
+}
+
+#chiSquareCharts {
+  grid-column: 1 / -1;
+}
+
+#chiSquareCharts .chart-card {
+  display: inline-block; width: calc(50% - 1rem);
+  margin-right: 2rem; vertical-align: top;
+}
+
+#chiSquareCharts .chart-card:nth-child(even) {
+  margin-right: 0;
+}
+
+.chart-card .plotly-notifier { display: none !important; }
+
+@media (max-width: 1024px) {
+  .analytics-charts {
+    grid-template-columns: 1fr;
+  }
+  
+  #regressionChart,
+  #groupComparisonChart,
+  #productivityChart,
+  #awarenessChart,
+  #perceptionChart {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .analytics-page { padding: 1rem; }
+  
+  .analytics-intro { padding: 1.5rem; }
+  
+  .analytics-intro h1 { font-size: 1.5rem; }
+  
+  .analytics-upload-form {
+    flex-direction: column;
+  }
+  
+  .analytics-upload-form input,
+  .analytics-upload-form button,
+  .analytics-upload-form label {
+    width: 100%;
+  }
+  
+  .analytics-controls {
+    flex-direction: column; align-items: stretch;
+  }
+  
+  .analytics-charts {
+    grid-template-columns: 1fr; gap: 1rem;
+  }
+  
+  #demographicsCharts .chart-card,
+  #chiSquareCharts .chart-card {
+    display: block; width: 100%; margin: 0 0 1rem 0;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PROFESSIONAL SURVEY DASHBOARD STYLES
+   ════════════════════════════════════════════════════════════════ */
+
+.dashboard-header {
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 100%);
+  color: #fff;
+  padding: 2rem;
+  border-radius: var(--radius);
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 24px rgba(11, 110, 47, 0.2);
+}
+
+.header-top h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  font-family: 'Syne', sans-serif;
+}
+
+.header-top p {
+  font-size: 1rem;
+  opacity: 0.95;
+  margin: 0;
+}
+
+.upload-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.analytics-upload-form {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.analytics-upload-form input[type="file"] {
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.analytics-upload-form input[type="file"]::file-selector-button {
+  background: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.analytics-upload-form button {
+  padding: 10px 20px;
+  background: #fff;
+  color: var(--green-dark);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.analytics-upload-form button:hover {
+  background: var(--green-pale);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.badge {
+  padding: 6px 14px;
+  background: #fff;
+  color: var(--green-dark);
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* ─── METRICS DASHBOARD ──────────────────────────────────────── */
+.metrics-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  background: var(--white-pure);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  transition: all 0.3s;
+}
+
+.metric-card:hover {
+  border-color: var(--green);
+  box-shadow: 0 6px 20px rgba(11, 110, 47, 0.15);
+  transform: translateY(-2px);
+}
+
+.metric-icon {
+  font-size: 2.5rem;
+  min-width: 60px;
+  text-align: center;
+}
+
+.metric-content {
+  flex: 1;
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  font-family: 'Syne', sans-serif;
+  color: var(--green-dark);
+}
+
+/* ─── DASHBOARD CONTROLS ─────────────────────────────────────── */
+.dashboard-controls {
+  background: var(--white-pure);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.controls-left {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.controls-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background: var(--green);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--green-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(11, 110, 47, 0.25);
+}
+
+.btn-secondary {
+  background: #f1f5f9;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--green-pale);
+  border-color: var(--green);
+}
+
+.timestamp {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ─── DASHBOARD SECTIONS ─────────────────────────────────────── */
+.dashboard-section {
+  background: var(--white-pure);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+  border-left: 6px solid;
+}
+
+.descriptive-section {
+  border-left-color: #06b6d4;
+}
+
+.demographics-section {
+  border-left-color: #8b5cf6;
+}
+
+.regression-section {
+  border-left-color: #ec4899;
+}
+
+.anova-section {
+  border-left-color: #f59e0b;
+}
+
+.awareness-section {
+  border-left-color: #10b981;
+}
+
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.descriptive-section .section-title {
+  color: #0891b2;
+}
+
+.demographics-section .section-title {
+  color: #7c3aed;
+}
+
+.regression-section .section-title {
+  color: #db2777;
+}
+
+.anova-section .section-title {
+  color: #d97706;
+}
+
+.awareness-section .section-title {
+  color: #059669;
+}
+
+.section-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 1.5rem;
+}
+
+.section-chart {
+  background: var(--green-pale);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.5rem;
+  min-height: 450px;
+}
+
+.section-chart h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--green-dark);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid rgba(11, 110, 47, 0.1);
+}
+
+/* ─── DASHBOARD FOOTER ───────────────────────────────────────── */
+.dashboard-footer {
+  background: var(--green-pale);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.dashboard-footer p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
+.timestamp-footer {
+  color: var(--green-dark);
+  font-weight: 600;
+}
+
+/* ─── RESPONSIVE DASHBOARD ───────────────────────────────────── */
+@media (max-width: 1024px) {
+  .metrics-dashboard {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .section-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .metrics-dashboard {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dashboard-header {
+    padding: 1.5rem;
+  }
+  
+  .header-top h1 {
+    font-size: 1.6rem;
+  }
+  
+  .dashboard-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .controls-right {
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .dashboard-section {
+    padding: 1.5rem;
+  }
+  
+  .section-title {
+    font-size: 1.1rem;
+  }
+  
+  .section-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-dashboard {
+    grid-template-columns: 1fr;
+  }
+  
+  .metric-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .metric-icon {
+    min-width: auto;
+  }
+  
+  .upload-section {
+    flex-direction: column;
+  }
+  
+  .analytics-upload-form {
+    width: 100%;
+  }
+  
+  .analytics-upload-form input,
+  .analytics-upload-form button {
+    width: 100%;
+  }
+}

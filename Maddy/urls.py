@@ -20,6 +20,11 @@ path('', views.home, name='home'),
     path('station/verify-qr/', views.verify_qr, name='verify_qr'),
     path('station/redeem/', views.process_redemption, name='process_redemption'),
 
+    # Analytics
+    path('analytics/', views.analytics_dashboard, name='analytics_dashboard'),
+    path('analytics/data/', views.analytics_data, name='analytics_data'),
+    path('analytics/sync/', views.sync_google_sheets, name='sync_google_sheets'),
+
     # Admin
     path('admin-portal/', views.admin_dashboard, name='admin_dashboard'),
     path('admin-portal/verify-rider/<int:rider_id>/', views.verify_rider, name='verify_rider'),
