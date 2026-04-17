@@ -20,6 +20,7 @@
   </a>
   <div class="nav-links">
     <a href="{% url 'survey' %}">Survey</a>
+    <a href="{% url 'analytics_dashboard' %}">Analytics</a>
     {% if user.is_authenticated %}
       <a href="{% url 'dashboard' %}">Dashboard</a>
       <a href="{% url 'logout' %}" class="btn-nav">Logout</a>

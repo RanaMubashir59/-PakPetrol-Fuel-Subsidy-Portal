@@ -7,7 +7,14 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Sum, Count
 from django.views.decorators.http import require_POST
-import json, qrcode, io, base64
+import json, qrcode, io, base64, logging
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from scipy import stats
+from django.conf import settings
+from django.views.decorators.http import require_GET
 
 from .models import (
     BikeUser, PetrolStation, CreditAccount, QRToken,
@@ -17,6 +24,9 @@ from .forms import (
     BikeUserRegistrationForm, StationRegistrationForm,
     RedemptionForm, LoginForm
 )
+from .google_sheets_helper import fetch_google_sheets_data, sync_sheets_to_csv, is_credentials_available
+
+logger = logging.getLogger(__name__)
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -77,6 +87,334 @@ def check_fraud(bike_user, station, amount):
 
     return True, "OK"
 
+ANALYTICS_CSV_PATH = Path(settings.BASE_DIR) / "analysis" / "google_form_responses.csv"
+ANALYTICS_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+LIKERT_MAPPING = {
+    "Strongly disagree": 1,
+    "Disagree": 2,
+    "Neutral": 3,
+    "Agree": 4,
+    "Strongly agree": 5,
+    "Never": 1,
+    "Rarely": 2,
+    "Sometimes": 3,
+    "Often": 4,
+    "Always": 5,
+    "Very Low": 1,
+    "Low": 2,
+    "Medium": 3,
+    "High": 4,
+    "Very High": 5,
+}
+
+
+def map_likert_value(value):
+    if pd.isna(value):
+        return np.nan
+    if isinstance(value, (int, float)):
+        return float(value)
+    return LIKERT_MAPPING.get(str(value).strip(), np.nan)
+
+
+def load_google_form_data():
+    """
+    Load Google Form responses from Google Sheets or fallback to CSV.
+    Priority: Google Sheets → CSV cache
+    Always tries Google Sheets first to get fresh data.
+    """
+    df = None
+    
+    # Try Google Sheets first - always get fresh data
+    if is_credentials_available():
+        logger.info("Attempting to fetch data from Google Sheets...")
+        try:
+            df = fetch_google_sheets_data(sheet_name="Customer Feedback (Responses)")
+            if df is not None:
+                logger.info(f"✅ Loaded {len(df)} rows from Google Sheets")
+                return df
+        except Exception as e:
+            logger.warning(f"Failed to fetch from Google Sheets: {e}. Falling back to CSV cache")
+    
+    # Fallback to CSV only if Google Sheets fails
+    try:
+        logger.info(f"Loading data from CSV: {ANALYTICS_CSV_PATH}")
+        df = pd.read_csv(ANALYTICS_CSV_PATH)
+        df.columns = df.columns.str.strip()
+        logger.info(f"✅ Loaded {len(df)} rows from CSV cache")
+        return df
+    except FileNotFoundError:
+        logger.warning(f"CSV file not found: {ANALYTICS_CSV_PATH}")
+        return None
+
+
+def group_value_counts(series):
+    return series.fillna("Missing").astype(str).value_counts().to_dict()
+
+
+def numeric_list(series):
+    return pd.to_numeric(series, errors="coerce").dropna().astype(float).tolist()
+
+
+def build_chi2_data(df, row_col, col_col):
+    try:
+        # Drop NaN values before creating contingency table
+        clean_df = df[[row_col, col_col]].dropna()
+        if len(clean_df) < 2:
+            return None
+            
+        contingency = pd.crosstab(
+            clean_df[row_col].astype(str), 
+            clean_df[col_col].astype(str)
+        )
+        if contingency.empty or contingency.shape[0] < 1 or contingency.shape[1] < 1:
+            return None
+        chi2, p, dof, _ = stats.chi2_contingency(contingency)
+        
+        # Convert to list of lists format for proper Plotly heatmap
+        rows = contingency.index.tolist()
+        cols = contingency.columns.tolist()
+        z = contingency.values.tolist()
+        
+        return {
+            "contingency": contingency.to_dict(),
+            "z": z,
+            "x": cols,
+            "y": rows,
+            "chi2": float(chi2),
+            "p_value": float(p),
+            "dof": int(dof),
+        }
+    except Exception as e:
+        print(f"Chi-square error: {e}")
+        return None
+
+
+def compute_analytics_payload(df):
+    """
+    Comprehensive statistical analysis following project requirements:
+    - Descriptive Statistics
+    - Data Visualization
+    - Correlation Analysis
+    - Regression Analysis
+    - Chi-square Tests
+    - ANOVA (Analysis of Variance)
+    """
+    payload = {
+        "generated_at": timezone.now().isoformat(),
+        
+        # DESCRIPTIVE STATISTICS
+        "descriptive_stats": {},
+        
+        # DEMOGRAPHICS (Data Visualization)
+        "demographics": {},
+        
+        # REGRESSION ANALYSIS
+        "regression": {},
+        
+        # CORRELATION ANALYSIS
+        "correlations": {},
+        
+        # GROUP COMPARISONS (ANOVA)
+        "anova": {},
+        
+        # CHI-SQUARE TESTS
+        "chi_square": {},
+        
+        # AWARENESS & PERCEPTION
+        "awareness": {},
+        "subsidy_perception": {},
+    }
+
+    # ============= 1. DESCRIPTIVE STATISTICS =============
+    numeric_cols = [
+        "Age",
+        "How far do you travel daily?",
+        "What is your approximate weekly fuel expense? (PKR)",
+        "Rising fuel prices affect my daily travel decisions",
+        "I reduce my travel due to high fuel costs",
+        "High fuel costs negatively impact my academic productivity",
+        "I feel financial stress due to fuel expenses",
+    ]
+    
+    desc_stats = {}
+    for col in numeric_cols:
+        if col in df.columns:
+            numeric_series = pd.to_numeric(df[col], errors="coerce").dropna()
+            if not numeric_series.empty:
+                desc_stats[col] = {
+                    "count": int(numeric_series.count()),
+                    "mean": float(numeric_series.mean()),
+                    "median": float(numeric_series.median()),
+                    "mode": float(numeric_series.mode()[0]) if not numeric_series.mode().empty else None,
+                    "std_dev": float(numeric_series.std()),
+                    "variance": float(numeric_series.var()),
+                    "min": float(numeric_series.min()),
+                    "max": float(numeric_series.max()),
+                }
+    payload["descriptive_stats"] = desc_stats
+
+    # ============= 2. DEMOGRAPHICS (Bar Charts, Pie Charts) =============
+    dem_cols = ["Age", "Gender", "City"]
+    for col in dem_cols:
+        if col in df.columns:
+            payload["demographics"][col] = group_value_counts(df[col])
+
+    # ============= 3. REGRESSION ANALYSIS =============
+    col_fuel_impact = "Rising fuel prices affect my daily travel decisions"
+    col_travel_reduction = "I reduce my travel due to high fuel costs"
+    
+    if col_fuel_impact in df.columns and col_travel_reduction in df.columns:
+        x = pd.to_numeric(df[col_fuel_impact], errors="coerce")
+        y = pd.to_numeric(df[col_travel_reduction], errors="coerce")
+        valid = pd.concat([x, y], axis=1).dropna()
+        
+        if len(valid) >= 2:
+            slope, intercept, r_value, p_value, std_err = stats.linregress(
+                valid[col_fuel_impact], valid[col_travel_reduction]
+            )
+            
+            # Calculate predictions for regression line
+            x_sorted = np.sort(valid[col_fuel_impact].values)
+            y_pred = slope * x_sorted + intercept
+            
+            payload["regression"] = {
+                "title": "Regression: Fuel Impact vs Travel Reduction",
+                "x_label": "Rising Fuel Prices (Impact Score)",
+                "y_label": "Travel Reduction",
+                "x": valid[col_fuel_impact].astype(float).tolist(),
+                "y": valid[col_travel_reduction].astype(float).tolist(),
+                "x_line": x_sorted.tolist(),
+                "y_line": y_pred.tolist(),
+                "equation": f"Y = {intercept:.4f} + {slope:.4f}X",
+                "slope": float(slope),
+                "intercept": float(intercept),
+                "r_squared": float(r_value ** 2),
+                "r_value": float(r_value),
+                "p_value": float(p_value),
+                "std_err": float(std_err),
+                "n_samples": len(valid),
+                "significance": "Significant" if p_value < 0.05 else "Not Significant",
+            }
+
+    # ============= 4. CORRELATION ANALYSIS (Pearson) =============
+    correlation_pairs = [
+        ("Age", "What is your approximate weekly fuel expense? (PKR)"),
+        (col_fuel_impact, col_travel_reduction),
+        ("How far do you travel daily?", "What is your approximate weekly fuel expense? (PKR)"),
+    ]
+    
+    correlations = {}
+    for var1, var2 in correlation_pairs:
+        if var1 in df.columns and var2 in df.columns:
+            v1 = pd.to_numeric(df[var1], errors="coerce").dropna()
+            v2 = pd.to_numeric(df[var2], errors="coerce").dropna()
+            
+            # Align indices
+            common_idx = v1.index.intersection(v2.index)
+            if len(common_idx) >= 2:
+                v1_aligned = v1[common_idx]
+                v2_aligned = v2[common_idx]
+                
+                corr, p_val = stats.pearsonr(v1_aligned, v2_aligned)
+                correlations[f"{var1[:20]} vs {var2[:20]}"] = {
+                    "pearson_r": float(corr),
+                    "p_value": float(p_val),
+                    "n": len(common_idx),
+                    "strength": interpret_correlation(corr),
+                }
+    
+    payload["correlations"] = correlations
+
+    # ============= 5. ANOVA (Analysis of Variance) by Motorcycle Usage =============
+    grouping_col = "How often do you use your motorcycle?"
+    if grouping_col in df.columns and col_fuel_impact in df.columns:
+        groups_data = []
+        group_names = []
+        
+        for group_val, subset in df.groupby(df[grouping_col].fillna("Unknown").astype(str)):
+            impact_scores = pd.to_numeric(subset[col_fuel_impact], errors="coerce").dropna()
+            if len(impact_scores) > 0:
+                groups_data.append(impact_scores.values)
+                group_names.append(str(group_val))
+        
+        if len(groups_data) >= 2:
+            try:
+                f_stat, p_val = stats.f_oneway(*groups_data)
+                payload["anova"] = {
+                    "title": f"ANOVA: {col_fuel_impact[:40]} by Usage Frequency",
+                    "groups": group_names,
+                    "f_statistic": float(f_stat),
+                    "p_value": float(p_val),
+                    "significance": "Significant difference" if p_val < 0.05 else "No significant difference",
+                    "group_means": {name: float(np.mean(data)) for name, data in zip(group_names, groups_data)},
+                    "group_stds": {name: float(np.std(data)) for name, data in zip(group_names, groups_data)},
+                }
+            except Exception as e:
+                print(f"ANOVA error: {e}")
+        else:
+            payload["anova"] = {
+                "error": f"Not enough groups (need 2+, got {len(groups_data)})",
+                "groups": group_names
+            }
+
+    # ============= 6. CHI-SQUARE TESTS =============
+    # Correct variable pairings from survey questions
+    chi_square_tests = [
+        ("Subsidy Benefit", "Are you aware of any government fuel subsidy programs?", "A fuel subsidy would improve my mobility"),
+        ("Missed Days vs Gender", "Gender", "On average how many days per month do you miss due to fuel issues?"),
+    ]
+    
+    for test_name, row_var, col_var in chi_square_tests:
+        if row_var in df.columns and col_var in df.columns:
+            chart_data = build_chi2_data(df, row_var, col_var)
+            if chart_data:
+                payload["chi_square"][test_name] = {
+                    "title": f"χ² Test: {test_name}",
+                    **chart_data
+                }
+
+    # ============= 7. AWARENESS & PERCEPTION =============
+    awareness_col = "Are you aware of any government fuel subsidy programs?"
+    if awareness_col in df.columns:
+        payload["awareness"] = {
+            "subsidy_awareness": group_value_counts(df[awareness_col])
+        }
+
+    subsidy_cols = [
+        "A fuel subsidy would improve my mobility",
+        "A digital system (QR-based) would make subsidy distribution more transparent",
+        "I would use a digital fuel subsidy system if available"
+    ]
+    subsidy_cols_present = [col for col in subsidy_cols if col in df.columns]
+    if subsidy_cols_present:
+        distributions = {}
+        means = {}
+        for col in subsidy_cols_present:
+            scores = pd.to_numeric(df[col], errors="coerce").dropna().astype(float)
+            distributions[col] = group_value_counts(df[col])
+            means[col] = float(scores.mean()) if not scores.empty else None
+        payload["subsidy_perception"] = {
+            "distributions": distributions,
+            "mean_scores": means,
+        }
+    
+    return payload
+
+
+def interpret_correlation(r_value):
+    """Interpret correlation strength"""
+    abs_r = abs(r_value)
+    if abs_r >= 0.7:
+        return "Strong"
+    elif abs_r >= 0.5:
+        return "Moderate"
+    elif abs_r >= 0.3:
+        return "Weak"
+    else:
+        return "Very Weak"
+
+    return payload
 
 # ─── Public Views ─────────────────────────────────────────────────────────────
 
@@ -146,6 +484,90 @@ def logout_view(request):
 
 def survey_view(request):
     return render(request, 'Survey.html')
+
+
+def analytics_dashboard(request):
+    csv_exists = ANALYTICS_CSV_PATH.exists()
+    if request.method == 'POST' and request.FILES.get('csv_upload'):
+        uploaded = request.FILES['csv_upload']
+        ANALYTICS_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with ANALYTICS_CSV_PATH.open('wb') as csv_file:
+            for chunk in uploaded.chunks():
+                csv_file.write(chunk)
+        messages.success(request, 'Google Forms CSV uploaded successfully. Refreshing charts...')
+        return redirect('analytics_dashboard')
+    return render(request, 'analytics_dashboard.html', {'csv_exists': csv_exists})
+
+
+@require_GET
+def analytics_data(request):
+    """
+    Analytics data endpoint - returns JSON for chart rendering.
+    """
+    try:
+        logger.info("📊 Analytics endpoint called")
+        
+        # Load data
+        df = load_google_form_data()
+        if df is None:
+            logger.error("❌ No data loaded - CSV not found")
+            return JsonResponse({
+                'error': 'CSV data file not found. Upload the CSV to analysis/google_form_responses.csv or via the analytics page.'
+            }, status=404)
+        
+        logger.info(f"✅ Data loaded: {len(df)} rows, {len(df.columns)} columns")
+        
+        # Compute payload
+        payload = compute_analytics_payload(df)
+        logger.info("✅ Analytics payload computed successfully")
+        
+        return JsonResponse(payload)
+        
+    except Exception as e:
+        logger.error(f"❌ Error in analytics_data: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'error': f'Internal error: {str(e)}'
+        }, status=500)
+
+
+@require_POST
+def sync_google_sheets(request):
+    """
+    Endpoint to manually sync Google Sheets data.
+    Forces a fresh fetch from Google Forms → Google Sheets → CSV.
+    """
+    try:
+        logger.info("📊 Manual sync requested from analytics dashboard")
+        
+        # Force fresh fetch from Google Sheets
+        df = fetch_google_sheets_data(sheet_name="Customer Feedback (Responses)")
+        
+        if df is None:
+            logger.error("❌ Failed to fetch data from Google Sheets")
+            return JsonResponse({
+                'error': 'Failed to sync. Check Google Sheets credentials or connection.',
+                'success': False
+            }, status=400)
+        
+        # Save to CSV for caching
+        ANALYTICS_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(ANALYTICS_CSV_PATH, index=False)
+        
+        logger.info(f"✅ Successfully synced {len(df)} rows from Google Sheets")
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully synced {len(df)} responses from Google Sheets',
+            'row_count': len(df),
+            'last_sync': timezone.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error syncing Google Sheets: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'error': f'Sync failed: {str(e)}',
+            'success': False
+        }, status=500)
 
 
 # ─── Dashboard Router ─────────────────────────────────────────────────────────
