@@ -6,15 +6,17 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Sum, Count
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 import json, qrcode, io, base64, logging
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from scipy import stats
 from django.conf import settings
-from django.views.decorators.http import require_GET
+
+# 🔗 NEW: Import structured analytics framework
+from analysis.analytics import enhance_analytics_payload, run_structured_analysis, make_json_serializable
+from analysis.google_sheets_helper import load_google_sheet_data
 
 from .models import (
     BikeUser, PetrolStation, CreditAccount, QRToken,
@@ -24,7 +26,6 @@ from .forms import (
     BikeUserRegistrationForm, StationRegistrationForm,
     RedemptionForm, LoginForm
 )
-from .google_sheets_helper import fetch_google_sheets_data, sync_sheets_to_csv, is_credentials_available
 
 logger = logging.getLogger(__name__)
 
@@ -87,25 +88,20 @@ def check_fraud(bike_user, station, amount):
 
     return True, "OK"
 
+
+# ─── Analytics Configuration ────────────────────────────────────────────────
+
 ANALYTICS_CSV_PATH = Path(settings.BASE_DIR) / "analysis" / "google_form_responses.csv"
 ANALYTICS_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+# Google Sheets settings (update with your actual Sheet ID)
+GOOGLE_SHEET_ID = getattr(settings, 'GOOGLE_SHEET_ID', '1dYw3HbOm8UFDhz-1LKCETV7Igjgqy_YWDSw2xbIMt6E')
+GOOGLE_SHEET_RANGE = getattr(settings, 'GOOGLE_SHEET_RANGE', 'Sheet1!A:Z')
+
 LIKERT_MAPPING = {
-    "Strongly disagree": 1,
-    "Disagree": 2,
-    "Neutral": 3,
-    "Agree": 4,
-    "Strongly agree": 5,
-    "Never": 1,
-    "Rarely": 2,
-    "Sometimes": 3,
-    "Often": 4,
-    "Always": 5,
-    "Very Low": 1,
-    "Low": 2,
-    "Medium": 3,
-    "High": 4,
-    "Very High": 5,
+    "Strongly disagree": 1, "Disagree": 2, "Neutral": 3, "Agree": 4, "Strongly agree": 5,
+    "Never": 1, "Rarely": 2, "Sometimes": 3, "Often": 4, "Always": 5,
+    "Very Low": 1, "Low": 2, "Medium": 3, "High": 4, "Very High": 5,
 }
 
 
@@ -117,119 +113,73 @@ def map_likert_value(value):
     return LIKERT_MAPPING.get(str(value).strip(), np.nan)
 
 
-def load_google_form_data():
-    """
-    Load Google Form responses from Google Sheets or fallback to CSV.
-    Priority: Google Sheets → CSV cache
-    Always tries Google Sheets first to get fresh data.
-    """
-    df = None
-    
-    # Try Google Sheets first - always get fresh data
-    if is_credentials_available():
-        logger.info("Attempting to fetch data from Google Sheets...")
-        try:
-            df = fetch_google_sheets_data(sheet_name="Customer Feedback (Responses)")
-            if df is not None:
-                logger.info(f"✅ Loaded {len(df)} rows from Google Sheets")
-                return df
-        except Exception as e:
-            logger.warning(f"Failed to fetch from Google Sheets: {e}. Falling back to CSV cache")
-    
-    # Fallback to CSV only if Google Sheets fails
-    try:
-        logger.info(f"Loading data from CSV: {ANALYTICS_CSV_PATH}")
-        df = pd.read_csv(ANALYTICS_CSV_PATH)
-        df.columns = df.columns.str.strip()
-        logger.info(f"✅ Loaded {len(df)} rows from CSV cache")
-        return df
-    except FileNotFoundError:
-        logger.warning(f"CSV file not found: {ANALYTICS_CSV_PATH}")
-        return None
-
-
 def group_value_counts(series):
     return series.fillna("Missing").astype(str).value_counts().to_dict()
 
 
-def numeric_list(series):
-    return pd.to_numeric(series, errors="coerce").dropna().astype(float).tolist()
+def interpret_correlation(r_value):
+    """Interpret correlation strength"""
+    abs_r = abs(r_value)
+    if abs_r >= 0.7: return "Strong"
+    elif abs_r >= 0.5: return "Moderate"
+    elif abs_r >= 0.3: return "Weak"
+    else: return "Very Weak"
 
 
-def build_chi2_data(df, row_col, col_col):
-    try:
-        # Drop NaN values before creating contingency table
-        clean_df = df[[row_col, col_col]].dropna()
-        if len(clean_df) < 2:
-            return None
-            
-        contingency = pd.crosstab(
-            clean_df[row_col].astype(str), 
-            clean_df[col_col].astype(str)
-        )
-        if contingency.empty or contingency.shape[0] < 1 or contingency.shape[1] < 1:
-            return None
-        chi2, p, dof, _ = stats.chi2_contingency(contingency)
-        
-        # Convert to list of lists format for proper Plotly heatmap
-        rows = contingency.index.tolist()
-        cols = contingency.columns.tolist()
-        z = contingency.values.tolist()
-        
-        return {
-            "contingency": contingency.to_dict(),
-            "z": z,
-            "x": cols,
-            "y": rows,
-            "chi2": float(chi2),
-            "p_value": float(p),
-            "dof": int(dof),
-        }
-    except Exception as e:
-        print(f"Chi-square error: {e}")
-        return None
+# ─── Analytics Data Loading ─────────────────────────────────────────────────
 
-
-def compute_analytics_payload(df):
+def load_analytics_data():
     """
-    Comprehensive statistical analysis following project requirements:
-    - Descriptive Statistics
-    - Data Visualization
-    - Correlation Analysis
-    - Regression Analysis
-    - Chi-square Tests
-    - ANOVA (Analysis of Variance)
+    Load Google Form responses: Google Sheets → CSV fallback
+    Returns DataFrame or None
+    """
+    try:
+        # Try Google Sheets first
+        df = load_google_sheet_data(
+            sheet_id=GOOGLE_SHEET_ID,
+            range_name=GOOGLE_SHEET_RANGE
+        )
+        if df is not None and not df.empty:
+            logger.info(f"✅ Loaded {len(df)} rows from Google Sheets")
+            return df
+    except Exception as e:
+        logger.warning(f"⚠️ Google Sheets load failed: {e}. Falling back to CSV...")
+    
+    # Fallback to CSV
+    try:
+        if ANALYTICS_CSV_PATH.exists():
+            df = pd.read_csv(ANALYTICS_CSV_PATH)
+            df.columns = df.columns.str.strip()
+            logger.info(f"✅ Loaded {len(df)} rows from CSV cache")
+            return df
+    except Exception as e:
+        logger.error(f"❌ CSV load failed: {e}")
+    
+    return None
+
+
+# ─── Legacy Analytics (Backward Compatible) ─────────────────────────────────
+
+def compute_legacy_analytics_payload(df):
+    """
+    Original analytics computation - kept for backward compatibility.
+    New structured analysis will be merged on top via enhance_analytics_payload().
     """
     payload = {
         "generated_at": timezone.now().isoformat(),
-        
-        # DESCRIPTIVE STATISTICS
         "descriptive_stats": {},
-        
-        # DEMOGRAPHICS (Data Visualization)
         "demographics": {},
-        
-        # REGRESSION ANALYSIS
         "regression": {},
-        
-        # CORRELATION ANALYSIS
         "correlations": {},
-        
-        # GROUP COMPARISONS (ANOVA)
         "anova": {},
-        
-        # CHI-SQUARE TESTS
         "chi_square": {},
-        
-        # AWARENESS & PERCEPTION
         "awareness": {},
         "subsidy_perception": {},
     }
 
     # ============= 1. DESCRIPTIVE STATISTICS =============
     numeric_cols = [
-        "Age",
-        "How far do you travel daily?",
+        "Age", "How far do you travel daily?",
         "What is your approximate weekly fuel expense? (PKR)",
         "Rising fuel prices affect my daily travel decisions",
         "I reduce my travel due to high fuel costs",
@@ -254,7 +204,7 @@ def compute_analytics_payload(df):
                 }
     payload["descriptive_stats"] = desc_stats
 
-    # ============= 2. DEMOGRAPHICS (Bar Charts, Pie Charts) =============
+    # ============= 2. DEMOGRAPHICS =============
     dem_cols = ["Age", "Gender", "City"]
     for col in dem_cols:
         if col in df.columns:
@@ -273,8 +223,6 @@ def compute_analytics_payload(df):
             slope, intercept, r_value, p_value, std_err = stats.linregress(
                 valid[col_fuel_impact], valid[col_travel_reduction]
             )
-            
-            # Calculate predictions for regression line
             x_sorted = np.sort(valid[col_fuel_impact].values)
             y_pred = slope * x_sorted + intercept
             
@@ -287,17 +235,14 @@ def compute_analytics_payload(df):
                 "x_line": x_sorted.tolist(),
                 "y_line": y_pred.tolist(),
                 "equation": f"Y = {intercept:.4f} + {slope:.4f}X",
-                "slope": float(slope),
-                "intercept": float(intercept),
-                "r_squared": float(r_value ** 2),
-                "r_value": float(r_value),
-                "p_value": float(p_value),
-                "std_err": float(std_err),
+                "slope": float(slope), "intercept": float(intercept),
+                "r_squared": float(r_value ** 2), "r_value": float(r_value),
+                "p_value": float(p_value), "std_err": float(std_err),
                 "n_samples": len(valid),
                 "significance": "Significant" if p_value < 0.05 else "Not Significant",
             }
 
-    # ============= 4. CORRELATION ANALYSIS (Pearson) =============
+    # ============= 4. CORRELATION ANALYSIS =============
     correlation_pairs = [
         ("Age", "What is your approximate weekly fuel expense? (PKR)"),
         (col_fuel_impact, col_travel_reduction),
@@ -309,29 +254,20 @@ def compute_analytics_payload(df):
         if var1 in df.columns and var2 in df.columns:
             v1 = pd.to_numeric(df[var1], errors="coerce").dropna()
             v2 = pd.to_numeric(df[var2], errors="coerce").dropna()
-            
-            # Align indices
             common_idx = v1.index.intersection(v2.index)
             if len(common_idx) >= 2:
-                v1_aligned = v1[common_idx]
-                v2_aligned = v2[common_idx]
-                
+                v1_aligned, v2_aligned = v1[common_idx], v2[common_idx]
                 corr, p_val = stats.pearsonr(v1_aligned, v2_aligned)
                 correlations[f"{var1[:20]} vs {var2[:20]}"] = {
-                    "pearson_r": float(corr),
-                    "p_value": float(p_val),
-                    "n": len(common_idx),
-                    "strength": interpret_correlation(corr),
+                    "pearson_r": float(corr), "p_value": float(p_val),
+                    "n": len(common_idx), "strength": interpret_correlation(corr),
                 }
-    
     payload["correlations"] = correlations
 
-    # ============= 5. ANOVA (Analysis of Variance) by Motorcycle Usage =============
+    # ============= 5. ANOVA =============
     grouping_col = "How often do you use your motorcycle?"
     if grouping_col in df.columns and col_fuel_impact in df.columns:
-        groups_data = []
-        group_names = []
-        
+        groups_data, group_names = [], []
         for group_val, subset in df.groupby(df[grouping_col].fillna("Unknown").astype(str)):
             impact_scores = pd.to_numeric(subset[col_fuel_impact], errors="coerce").dropna()
             if len(impact_scores) > 0:
@@ -344,22 +280,15 @@ def compute_analytics_payload(df):
                 payload["anova"] = {
                     "title": f"ANOVA: {col_fuel_impact[:40]} by Usage Frequency",
                     "groups": group_names,
-                    "f_statistic": float(f_stat),
-                    "p_value": float(p_val),
+                    "f_statistic": float(f_stat), "p_value": float(p_val),
                     "significance": "Significant difference" if p_val < 0.05 else "No significant difference",
                     "group_means": {name: float(np.mean(data)) for name, data in zip(group_names, groups_data)},
                     "group_stds": {name: float(np.std(data)) for name, data in zip(group_names, groups_data)},
                 }
             except Exception as e:
-                print(f"ANOVA error: {e}")
-        else:
-            payload["anova"] = {
-                "error": f"Not enough groups (need 2+, got {len(groups_data)})",
-                "groups": group_names
-            }
+                logger.warning(f"ANOVA error: {e}")
 
     # ============= 6. CHI-SQUARE TESTS =============
-    # Correct variable pairings from survey questions
     chi_square_tests = [
         ("Subsidy Benefit", "Are you aware of any government fuel subsidy programs?", "A fuel subsidy would improve my mobility"),
         ("Missed Days vs Gender", "Gender", "On average how many days per month do you miss due to fuel issues?"),
@@ -367,19 +296,30 @@ def compute_analytics_payload(df):
     
     for test_name, row_var, col_var in chi_square_tests:
         if row_var in df.columns and col_var in df.columns:
-            chart_data = build_chi2_data(df, row_var, col_var)
-            if chart_data:
-                payload["chi_square"][test_name] = {
-                    "title": f"χ² Test: {test_name}",
-                    **chart_data
-                }
+            try:
+                clean_df = df[[row_var, col_var]].dropna()
+                if len(clean_df) >= 2:
+                    contingency = pd.crosstab(
+                        clean_df[row_var].astype(str), 
+                        clean_df[col_var].astype(str)
+                    )
+                    if not contingency.empty and contingency.shape[0] >= 1 and contingency.shape[1] >= 1:
+                        chi2, p, dof, _ = stats.chi2_contingency(contingency)
+                        payload["chi_square"][test_name] = {
+                            "title": f"χ² Test: {test_name}",
+                            "contingency": contingency.to_dict(),
+                            "z": contingency.values.tolist(),
+                            "x": contingency.columns.tolist(),
+                            "y": contingency.index.tolist(),
+                            "chi2": float(chi2), "p_value": float(p), "dof": int(dof),
+                        }
+            except Exception as e:
+                logger.warning(f"Chi-square error for {test_name}: {e}")
 
     # ============= 7. AWARENESS & PERCEPTION =============
     awareness_col = "Are you aware of any government fuel subsidy programs?"
     if awareness_col in df.columns:
-        payload["awareness"] = {
-            "subsidy_awareness": group_value_counts(df[awareness_col])
-        }
+        payload["awareness"] = {"subsidy_awareness": group_value_counts(df[awareness_col])}
 
     subsidy_cols = [
         "A fuel subsidy would improve my mobility",
@@ -388,33 +328,15 @@ def compute_analytics_payload(df):
     ]
     subsidy_cols_present = [col for col in subsidy_cols if col in df.columns]
     if subsidy_cols_present:
-        distributions = {}
-        means = {}
+        distributions, means = {}, {}
         for col in subsidy_cols_present:
             scores = pd.to_numeric(df[col], errors="coerce").dropna().astype(float)
             distributions[col] = group_value_counts(df[col])
             means[col] = float(scores.mean()) if not scores.empty else None
-        payload["subsidy_perception"] = {
-            "distributions": distributions,
-            "mean_scores": means,
-        }
+        payload["subsidy_perception"] = {"distributions": distributions, "mean_scores": means}
     
     return payload
 
-
-def interpret_correlation(r_value):
-    """Interpret correlation strength"""
-    abs_r = abs(r_value)
-    if abs_r >= 0.7:
-        return "Strong"
-    elif abs_r >= 0.5:
-        return "Moderate"
-    elif abs_r >= 0.3:
-        return "Weak"
-    else:
-        return "Very Weak"
-
-    return payload
 
 # ─── Public Views ─────────────────────────────────────────────────────────────
 
@@ -503,24 +425,31 @@ def analytics_dashboard(request):
 def analytics_data(request):
     """
     Analytics data endpoint - returns JSON for chart rendering.
+    ✅ INTEGRATED: Structured statistical analysis framework
     """
     try:
         logger.info("📊 Analytics endpoint called")
         
-        # Load data
-        df = load_google_form_data()
-        if df is None:
-            logger.error("❌ No data loaded - CSV not found")
+        # Load data (Google Sheets → CSV fallback)
+        df = load_analytics_data()
+        if df is None or df.empty:
+            logger.error("❌ No data loaded")
             return JsonResponse({
                 'error': 'CSV data file not found. Upload the CSV to analysis/google_form_responses.csv or via the analytics page.'
             }, status=404)
         
         logger.info(f"✅ Data loaded: {len(df)} rows, {len(df.columns)} columns")
         
-        # Compute payload
-        payload = compute_analytics_payload(df)
-        logger.info("✅ Analytics payload computed successfully")
+        # Step 1: Compute legacy payload (backward compatibility)
+        payload = compute_legacy_analytics_payload(df)
         
+        # Step 2: 🔗 ENHANCE WITH STRUCTURED ANALYSIS (NEW FEATURE)
+        payload = enhance_analytics_payload(payload, df)
+        
+        # Step 3: Ensure JSON-serializable output
+        payload = make_json_serializable(payload)
+        
+        logger.info("✅ Analytics payload computed and enhanced successfully")
         return JsonResponse(payload)
         
     except Exception as e:
@@ -540,9 +469,12 @@ def sync_google_sheets(request):
         logger.info("📊 Manual sync requested from analytics dashboard")
         
         # Force fresh fetch from Google Sheets
-        df = fetch_google_sheets_data(sheet_name="Customer Feedback (Responses)")
+        df = load_google_sheet_data(
+            sheet_id=GOOGLE_SHEET_ID,
+            range_name=GOOGLE_SHEET_RANGE
+        )
         
-        if df is None:
+        if df is None or df.empty:
             logger.error("❌ Failed to fetch data from Google Sheets")
             return JsonResponse({
                 'error': 'Failed to sync. Check Google Sheets credentials or connection.',
@@ -600,11 +532,8 @@ def rider_dashboard(request):
     QRToken.objects.filter(bike_user=rider, status='active', expires_at__lt=timezone.now()).update(status='expired')
 
     return render(request, 'rider_dashboard.html', {
-        'rider': rider,
-        'account': account,
-        'recent_txns': recent_txns,
-        'current_price': current_price,
-        'litres_available': round(litres_available, 2),
+        'rider': rider, 'account': account, 'recent_txns': recent_txns,
+        'current_price': current_price, 'litres_available': round(litres_available, 2),
     })
 
 
@@ -633,9 +562,7 @@ def generate_qr(request):
     qr_image = generate_qr_image(qr_data)
 
     return JsonResponse({
-        'token': qr_data,
-        'qr_image': qr_image,
-        'expires_in': 600,
+        'token': qr_data, 'qr_image': qr_image, 'expires_in': 600,
         'balance': str(account.balance),
     })
 
@@ -655,12 +582,9 @@ def station_dashboard(request):
     today_litres = today_txns.aggregate(Sum('litres_dispensed'))['litres_dispensed__sum'] or 0
 
     return render(request, 'portal/station_dashboard.html', {
-        'station': station,
-        'recent_txns': recent_txns,
-        'today_total': today_total,
-        'today_litres': round(float(today_litres), 2),
-        'today_count': today_txns.count(),
-        'current_price': FuelPrice.current_price(),
+        'station': station, 'recent_txns': recent_txns,
+        'today_total': today_total, 'today_litres': round(float(today_litres), 2),
+        'today_count': today_txns.count(), 'current_price': FuelPrice.current_price(),
     })
 
 
@@ -691,14 +615,11 @@ def verify_qr(request):
     current_price = FuelPrice.current_price()
 
     return JsonResponse({
-        'rider_name': rider.full_name,
-        'cnic': rider.cnic[:5] + '-XXXXXXX-X',
-        'bike_reg': rider.bike_registration,
-        'bike_type': rider.bike_type,
+        'rider_name': rider.full_name, 'cnic': rider.cnic[:5] + '-XXXXXXX-X',
+        'bike_reg': rider.bike_registration, 'bike_type': rider.bike_type,
         'balance': str(account.balance),
         'litres_possible': str(round(float(account.balance) / float(current_price), 2)),
-        'fuel_price': str(current_price),
-        'token': token_str,
+        'fuel_price': str(current_price), 'token': token_str,
     })
 
 
@@ -756,25 +677,17 @@ def process_redemption(request):
 
     # Create transaction record
     txn = Transaction.objects.create(
-        bike_user=rider,
-        station=station,
-        qr_token=qr_token,
-        amount_deducted=amount,
-        litres_dispensed=litres,
+        bike_user=rider, station=station, qr_token=qr_token,
+        amount_deducted=amount, litres_dispensed=litres,
         fuel_price_at_time=current_price,
-        balance_before=balance_before,
-        balance_after=account.balance,
+        balance_before=balance_before, balance_after=account.balance,
         status='success'
     )
 
     return JsonResponse({
-        'success': True,
-        'transaction_id': str(txn.transaction_id)[:12].upper(),
-        'rider_name': rider.full_name,
-        'litres': litres,
-        'amount': amount,
-        'balance_after': str(account.balance),
-        'station': station.name,
+        'success': True, 'transaction_id': str(txn.transaction_id)[:12].upper(),
+        'rider_name': rider.full_name, 'litres': litres, 'amount': amount,
+        'balance_after': str(account.balance), 'station': station.name,
         'timestamp': txn.created_at.strftime('%d %b %Y %H:%M'),
     })
 
@@ -804,8 +717,7 @@ def admin_dashboard(request):
     city_stats = Transaction.objects.filter(status='success').values(
         'station__city__name'
     ).annotate(
-        count=Count('id'),
-        total=Sum('amount_deducted')
+        count=Count('id'), total=Sum('amount_deducted')
     ).order_by('-total')[:6]
 
     current_price = FuelPrice.current_price()
@@ -828,7 +740,6 @@ def verify_rider(request, rider_id):
     rider = get_object_or_404(BikeUser, id=rider_id)
     rider.is_verified = True
     rider.save()
-    # Credit first month quota
     rider.get_or_create_account().credit_monthly_quota()
     messages.success(request, f"{rider.full_name} verified and credited Rs.1500.")
     return redirect('admin_dashboard')
@@ -853,9 +764,7 @@ def set_fuel_price(request):
         price = request.POST.get('price')
         try:
             FuelPrice.objects.create(
-                price_per_litre=float(price),
-                fuel_type='petrol',
-                updated_by=request.user
+                price_per_litre=float(price), fuel_type='petrol', updated_by=request.user
             )
             messages.success(request, f"Petrol price updated to Rs.{price}/L")
         except Exception as e:
@@ -871,8 +780,7 @@ def credit_all_riders(request):
     credited = 0
     for rider in BikeUser.objects.filter(is_verified=True, is_active=True):
         ok, _ = rider.get_or_create_account().credit_monthly_quota()
-        if ok:
-            credited += 1
+        if ok: credited += 1
     messages.success(request, f"Credited {credited} riders with monthly quota.")
     return redirect('admin_dashboard')
 

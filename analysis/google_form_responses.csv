@@ -1,8 +1,61 @@
 Timestamp,Age,Gender,Are you a student?,Do you own or regularly use a motorcycle?,City,How far do you travel daily?,What is your approximate weekly fuel expense? (PKR),How often do you use your motorcycle?,Rising fuel prices affect my daily travel decisions,I reduce my travel due to high fuel costs,Fuel prices have caused me to miss classes or work,High fuel costs negatively impact my academic productivity,I feel financial stress due to fuel expenses,"On average, how many days per month do you miss due to fuel issues?",Are you aware of any government fuel subsidy programs?,A fuel subsidy would improve my mobility,A digital system (QR-based) would make subsidy distribution more transparent,I would use a digital fuel subsidy system if available
-4/12/2026 1:12:25,20,Male,Yes,Yes,Lahore,10,1000,Daily,5,3,3,3,5,3-5,No,3,3,2
-4/12/2026 1:17:27,20,Male,Yes,Yes,Lahore,10,500,Rarely,4,3,5,4,2,More than 5,No,1,2,4
-4/12/2026 11:54:03,19,Male,Yes,Yes,Lahore,20,2000,Daily,4,4,2,3,3,0,Yes,3,1,3
-4/12/2026 18:37:10,18,Male,Yes,Yes,Lahore,16,2100,3–5 times a week,5,4,1,1,4,0,Yes,5,5,5
-4/12/2026 18:38:56,20,Male,Yes,Yes,Lahore,32,3000,Daily,,,1,4,5,0,Yes,5,5,5
-4/12/2026 21:22:23,20,Male,Yes,Yes,Lahore,30,1200,Daily,5,5,4,3,3,3-5,Yes,4,3,5
-4/13/2026 8:20:49,18,Male,Yes,Yes,Lahore,,3000,Daily,2,2,1,1,3,0,Yes,2,2,5
+4/12/2026 1:12:25,20,Male,Yes,Yes,Lahore,10.0,1000,Daily,5.0,3.0,3,3,5,3-5,No,3,3.0,2
+4/12/2026 1:17:27,20,Male,Yes,Yes,Lahore,10.0,500,Rarely,4.0,3.0,5,4,2,More than 5,No,1,2.0,4
+4/12/2026 11:54:03,19,Male,Yes,Yes,Lahore,20.0,2000,Daily,4.0,4.0,2,3,3,0,Yes,3,1.0,3
+4/12/2026 18:37:10,18,Male,Yes,Yes,Lahore,16.0,2100,3–5 times a week,5.0,4.0,1,1,4,0,Yes,5,5.0,5
+4/12/2026 18:38:56,20,Male,Yes,Yes,Lahore,32.0,3000,Daily,,,1,4,5,0,Yes,5,5.0,5
+4/12/2026 21:22:23,20,Male,Yes,Yes,Lahore,30.0,1200,Daily,5.0,5.0,4,3,3,3-5,Yes,4,3.0,5
+4/13/2026 8:20:49,18,Male,Yes,Yes,Lahore,,3000,Daily,2.0,2.0,1,1,3,0,Yes,2,2.0,5
+4/17/2026 13:02:28,21,Male,Yes,Yes,Lahore,25.0,3200,Daily,5.0,5.0,5,5,5,0,Yes,5,5.0,4
+4/19/2026 19:43:37,24,Male,Yes,Yes,Lahore,30.0,3000,Daily,5.0,5.0,4,4,4,1-2,Yes,1,2.0,3
+4/19/2026 19:47:08,21,Male,Yes,Yes,Lahore,15.0,3200,Daily,5.0,5.0,5,5,5,3-5,No,5,5.0,4
+4/19/2026 19:55:10,24,Male,Yes,Yes,Lahore,40.0,4000,Daily,5.0,1.0,3,4,3,3-5,No,3,1.0,3
+4/19/2026 19:56:07,20,Male,Yes,Yes,Lahore,20.0,4000,Daily,1.0,1.0,1,1,1,1-2,No,1,1.0,1
+4/19/2026 19:56:36,18,Male,Yes,Yes,Sialkot,10.0,10000,Daily,2.0,3.0,4,2,3,1-2,Yes,3,,4
+4/19/2026 20:01:38,19,Male,Yes,Yes,Sialkot,7.0,5000,Daily,5.0,5.0,5,5,5,More than 5,Yes,5,5.0,5
+4/19/2026 20:04:14,19,Male,Yes,No,Lahore,38.0,4000,Daily,5.0,5.0,1,1,1,0,Yes,5,5.0,5
+4/19/2026 20:12:31,18,Male,Yes,Yes,Lahore,12.0,900,Daily,1.0,1.0,1,3,2,1-2,Yes,3,4.0,3
+4/19/2026 20:25:06,21,Male,Yes,Yes,Lahore,30.0,2000,Daily,5.0,5.0,2,1,5,0,No,5,5.0,5
+4/19/2026 20:29:11,20,Male,Yes,Yes,Lahore,10.0,1200,Daily,4.0,4.0,1,1,4,0,No,1,2.0,1
+4/19/2026 20:29:37,60,Male,No,No,Sargodha,100.0,50000,Occasionally,1.0,2.0,1,2,1,0,Yes,1,1.0,3
+4/19/2026 20:39:52,23,Male,Yes,Yes,Lahore,23.0,3300,Daily,5.0,5.0,3,5,5,0,Yes,5,5.0,5
+4/19/2026 20:41:37,20,Male,Yes,Yes,Lahore,30.0,1500,Daily,5.0,4.0,4,4,3,1-2,No,4,5.0,5
+4/19/2026 20:44:41,20,Male,Yes,Yes,Lahore,30.0,1800,Daily,1.0,1.0,1,1,5,0,Yes,1,4.0,5
+4/19/2026 20:52:51,20,Male,Yes,Yes,Lahore,40.0,350,Daily,4.0,3.0,3,2,4,3-5,Yes,1,3.0,3
+4/19/2026 20:59:05,21,Male,No,Yes,Sialkot,3.0,2000,Daily,1.0,1.0,1,1,5,1-2,No,4,5.0,5
+4/19/2026 21:16:21,21,Male,Yes,Yes,Lahore,10.0,700,Daily,5.0,4.0,3,3,3,1-2,Yes,5,3.0,5
+4/19/2026 21:17:01,20,Male,Yes,No,Lahore,30.0,1200,Daily,5.0,3.0,3,3,5,1-2,Yes,1,5.0,4
+4/19/2026 21:30:45,20,Male,Yes,Yes,Lahore,9.0,200,Daily,5.0,5.0,5,4,5,3-5,Yes,1,5.0,1
+4/19/2026 21:36:57,20,Male,Yes,Yes,Lahore,10.0,2000,Daily,5.0,5.0,3,4,3,3-5,No,3,3.0,3
+4/19/2026 21:38:47,20,Male,Yes,Yes,Lahore,3.0,2000,Daily,5.0,5.0,3,4,5,More than 5,No,1,5.0,5
+4/19/2026 21:42:45,22,Female,Yes,Yes,Lahore,15.0,10000,Daily,3.0,3.0,1,3,4,1-2,Yes,3,3.0,3
+4/19/2026 21:48:48,22,Female,Yes,No,Lahore,10.0,1000,3–5 times a week,5.0,3.0,1,5,1,1-2,Yes,1,5.0,5
+4/19/2026 21:52:47,20,Male,Yes,Yes,Lahore,10.0,1200,Daily,5.0,5.0,5,5,5,More than 5,Yes,1,1.0,5
+4/19/2026 21:55:30,21,Male,Yes,Yes,Lahore,50.0,5000,Daily,1.0,1.0,1,1,5,0,No,1,2.0,3
+4/19/2026 21:59:50,30,Male,No,Yes,Lahore,100.0,20000,Daily,5.0,1.0,1,1,5,0,No,1,1.0,1
+4/19/2026 22:05:36,20,Female,Yes,No,Lahore,10.0,2000,3–5 times a week,1.0,2.0,4,5,1,3-5,Yes,2,1.0,4
+4/19/2026 22:05:49,19,Female,Yes,No,Lahore,16.0,2100,Rarely,5.0,4.0,2,4,5,1-2,Yes,5,5.0,5
+4/19/2026 22:09:55,20,Male,No,No,Lahore,20.0,4000,Daily,4.0,1.0,2,1,5,1-2,Yes,5,1.0,2
+4/19/2026 22:13:32,22,Male,Yes,Yes,Lahore,29.0,2700,Daily,5.0,5.0,4,4,2,0,Yes,4,4.0,5
+4/19/2026 22:15:55,18,Male,Yes,Yes,Lahore,23.0,3000,Daily,5.0,5.0,2,2,5,0,Yes,5,5.0,5
+4/19/2026 22:16:40,20,Female,Yes,No,Lahore,21.0,5000,Occasionally,5.0,5.0,1,5,5,3-5,No,1,1.0,1
+4/19/2026 22:17:09,19,Male,Yes,Yes,Lahore,30.0,1500,Daily,4.0,4.0,4,4,5,3-5,Yes,2,3.0,3
+4/19/2026 22:18:48,23,Male,Yes,Yes,Lahore,25.0,3200,Daily,5.0,5.0,2,5,5,0,Yes,5,5.0,5
+4/19/2026 22:24:31,21,Female,Yes,Yes,Lahore,1.0,6000,Daily,5.0,5.0,5,5,1,More than 5,No,1,5.0,1
+4/19/2026 22:26:15,19,Male,Yes,Yes,Lahore,35.0,2000,Daily,5.0,4.0,3,4,2,1-2,No,5,5.0,5
+4/19/2026 22:27:47,20,Male,Yes,Yes,Lahore,28.0,1400,Daily,5.0,5.0,5,4,2,1-2,No,5,5.0,5
+4/19/2026 22:29:29,18,Male,Yes,Yes,Faisalabad,40.0,3000,Daily,5.0,5.0,5,5,5,3-5,Yes,5,5.0,5
+4/19/2026 22:30:03,18,Male,Yes,Yes,Lahore,25.0,2700,Daily,5.0,5.0,2,5,5,0,Yes,5,5.0,5
+4/19/2026 22:31:37,20,Male,Yes,Yes,Lahore,21.0,2000,Daily,5.0,5.0,2,5,5,0,Yes,5,5.0,5
+4/19/2026 22:32:50,20,Male,Yes,Yes,Lahore,1.0,7000,Daily,5.0,5.0,5,5,5,More than 5,No,5,1.0,5
+4/19/2026 22:34:42,21,Female,Yes,No,Lahore,10.0,800,3–5 times a week,5.0,5.0,3,3,4,More than 5,No,4,4.0,5
+4/19/2026 22:40:25,20,Female,Yes,Yes,Lahore,1.0,5000,Daily,1.0,1.0,5,1,5,More than 5,Yes,1,1.0,5
+4/19/2026 23:30:14,21,Male,Yes,"Yes, No",Rawalpindi,300.0,500,Occasionally,1.0,2.0,3,4,3,3-5,Yes,4,2.0,2
+4/19/2026 23:49:21,30,Male,Yes,Yes,Other,,3000,Daily,5.0,5.0,5,5,5,More than 5,No,1,1.0,1
+4/20/2026 3:23:07,21,Male,Yes,Yes,Lahore,40.0,3000,Daily,5.0,5.0,5,4,5,3-5,No,5,5.0,5
+4/20/2026 7:18:38,18,Male,Yes,Yes,Sialkot,10.0,2000,Daily,5.0,4.0,2,5,5,More than 5,No,2,3.0,4
+4/20/2026 11:19:47,18,Male,Yes,Yes,Lahore,40.0,2000,Daily,5.0,5.0,3,3,1,1-2,No,5,5.0,5
+4/20/2026 12:07:17,20,Male,Yes,Yes,Lahore,50.0,2000,Daily,5.0,4.0,3,3,4,3-5,Yes,5,5.0,5
+4/20/2026 18:34:22,20,Male,Yes,Yes,Lahore,9.0,4000,Daily,5.0,3.0,5,5,5,1-2,Yes,5,5.0,5
+4/21/2026 1:54:12,19,Male,Yes,Yes,Lahore,60.0,1,Daily,5.0,5.0,5,5,5,More than 5,Yes,5,5.0,5
+4/21/2026 7:57:27,20,Male,Yes,Yes,Lahore,30.0,2000,Daily,4.0,3.0,4,3,3,1-2,Yes,4,4.0,4

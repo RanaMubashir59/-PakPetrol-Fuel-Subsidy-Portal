@@ -364,6 +364,15 @@ function renderAnalytics(data) {
   if (data.chi_square && Object.keys(data.chi_square).length > 0) renderChiSquare(data.chi_square);
   if (data.awareness) renderAwareness(data.awareness);
   if (data.subsidy_perception) renderPerception(data.subsidy_perception);
+  if (data.hypothesis_tests?.t_test) {
+    renderHypothesisTests(data.hypothesis_tests.t_test);
+  }
+  if (data.qualitative_insights) {
+    renderQualitativeInsights(data.qualitative_insights);
+  }
+  if (data.analysis_metadata) {
+    updateAnalysisMetadata(data.analysis_metadata);
+  }
 }
 
 async function fetchAnalytics() {
@@ -452,6 +461,123 @@ if (downloadButton) {
   downloadButton.addEventListener('click', () => {
     alert('Report download feature coming soon!');
   });
+}
+
+// =============================================================================
+// 🆕 NEW: Hypothesis Testing Renderer (T-Test) - For Section 6
+// =============================================================================
+function renderHypothesisTests(ttest) {
+  if (!ttest) return;
+  
+  const container = document.getElementById('hypothesisChart');
+  if (!container) {
+    console.error('❌ hypothesisChart div not found!');
+    return;
+  }
+  
+  const badge = ttest.significant 
+    ? `<span class="badge success">✓ Significant (p < 0.05)</span>`
+    : `<span class="badge warning">✗ Not Significant</span>`;
+  
+  container.innerHTML = `
+    <div class="stats-card">
+      <h4 style="margin:0 0 15px 0;color:#1e293b;">${ttest.test_type || 'T-Test'}</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0;">
+        <div class="stat-box" style="background:white;padding:12px;border-radius:8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+          <strong style="color:#64748b;font-size:0.9em;">${ttest.groups_compared?.[0] || 'Group 1'}</strong>
+          <div style="font-size:1.4em;font-weight:bold;color:#1e293b;margin:5px 0;">${typeof ttest.group1_mean === 'number' ? ttest.group1_mean.toFixed(2) : 'N/A'}</div>
+          <div style="color:#64748b;font-size:0.85em;">n = ${ttest.sample_sizes?.group1 || '?'}</div>
+        </div>
+        <div class="stat-box" style="background:white;padding:12px;border-radius:8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+          <strong style="color:#64748b;font-size:0.9em;">${ttest.groups_compared?.[1] || 'Group 2'}</strong>
+          <div style="font-size:1.4em;font-weight:bold;color:#1e293b;margin:5px 0;">${typeof ttest.group2_mean === 'number' ? ttest.group2_mean.toFixed(2) : 'N/A'}</div>
+          <div style="color:#64748b;font-size:0.85em;">n = ${ttest.sample_sizes?.group2 || '?'}</div>
+        </div>
+      </div>
+      <div style="background:#f1f5f9;padding:8px 12px;border-radius:6px;font-family:monospace;font-size:0.9em;margin:10px 0;">
+        t = ${typeof ttest.t_statistic === 'number' ? ttest.t_statistic.toFixed(4) : 'N/A'} | 
+        p = ${typeof ttest.p_value === 'number' ? ttest.p_value.toFixed(4) : 'N/A'} | 
+        d = ${typeof ttest.cohens_d === 'number' ? ttest.cohens_d.toFixed(3) : 'N/A'}
+      </div>
+      <div style="margin:10px 0;">${badge}</div>
+      <p style="margin:0;color:#475569;font-size:0.95em;">${ttest.interpretation || ''}</p>
+    </div>
+  `;
+}
+
+// =============================================================================
+// 🆕 NEW: Qualitative Insights Renderer (Sentiment + Frequencies) - For Section 7
+// =============================================================================
+function renderQualitativeInsights(qualData) {
+  if (!qualData) return;
+  
+  // --- Sentiment Summary (Left Column) ---
+  if (qualData.sentiment_summary && Object.keys(qualData.sentiment_summary).length > 0) {
+    const container = document.getElementById('sentimentChart');
+    if (!container) return;
+    
+    let html = '<h4 style="margin:0 0 15px 0;color:#1e293b;">📊 Perception Scores</h4><div style="display:grid;grid-template-columns:1fr;gap:10px;">';
+    
+    Object.entries(qualData.sentiment_summary).forEach(([question, data]) => {
+      const colors = {
+        'Very Positive': '#10b981', 'Positive': '#3b82f6', 'Neutral': '#f59e0b',
+        'Negative': '#ef4444', 'Very Negative': '#dc2626'
+      }[data.sentiment_label] || '#6b7280';
+      
+      const shortQ = question.length > 45 ? question.substring(0, 45) + '…' : question;
+      
+      html += `
+        <div style="background:white;padding:12px;border-radius:8px;border-left:4px solid ${colors};box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size:0.85em;color:#1e293b;margin-bottom:8px;line-height:1.3;">${shortQ}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:1.3em;font-weight:bold;color:#1e293b;">${data.mean_score}/5</span>
+            <span style="padding:4px 10px;border-radius:12px;background:${colors};color:white;font-size:0.75em;font-weight:500;">${data.sentiment_label}</span>
+          </div>
+          <div style="font-size:0.8em;color:#64748b;margin-top:5px;">${data.n_responses || 0} responses</div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+  }
+  
+  // --- Frequency Distributions (Right Column) ---
+  if (qualData.frequency_distributions && Object.keys(qualData.frequency_distributions).length > 0) {
+    const container = document.getElementById('freqChart');
+    if (!container) return;
+    
+    let html = '<h4 style="margin:0 0 15px 0;color:#1e293b;">📋 Response Frequencies</h4><div style="max-height:400px;overflow-y:auto;">';
+    
+    Object.entries(qualData.frequency_distributions).slice(0, 5).forEach(([col, data]) => {
+      const shortCol = col.length > 35 ? col.substring(0, 35) + '…' : col;
+      
+      html += `<div style="background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <strong style="font-size:0.9em;color:#1e293b;">${shortCol}</strong>
+        <table style="width:100%;font-size:0.8em;margin-top:8px;border-collapse:collapse;">
+          <tr style="border-bottom:2px solid #e2e8f0;"><th style="text-align:left;padding:4px 0;color:#64748b;">Value</th><th style="text-align:center;padding:4px 0;color:#64748b;">Count</th><th style="text-align:right;padding:4px 0;color:#64748b;">%</th></tr>`;
+      
+      Object.entries(data.frequencies).slice(0, 4).forEach(([val, count]) => {
+        const pct = data.percentages?.[val] || 0;
+        html += `<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:4px 0;">${val}</td><td style="text-align:center;padding:4px 0;font-weight:500;">${count}</td><td style="text-align:right;padding:4px 0;color:#64748b;">${pct}%</td></tr>`;
+      });
+      
+      html += '</table></div>';
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+  }
+}
+
+// =============================================================================
+// 🆕 NEW: Update Footer Metadata
+// =============================================================================
+function updateAnalysisMetadata(metadata) {
+  const footer = document.getElementById('analysisFooter');
+  if (!footer) return;
+  
+  footer.innerHTML = `<small style="color:#64748b;">📊 ${metadata.quantitative_vars || 0} quantitative + ${metadata.qualitative_vars || 0} qualitative | 📥 ${metadata.total_responses || 0} responses | 🕐 ${new Date(metadata.analysis_timestamp).toLocaleTimeString()}</small>`;
 }
 
 window.addEventListener('DOMContentLoaded', startPolling);

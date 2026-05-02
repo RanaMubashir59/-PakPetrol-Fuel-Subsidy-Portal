@@ -5,7 +5,8 @@
 
 {% block content %}
 <div class="analytics-page">
-  <!-- HEADER -->
+  
+  <!-- ========== HEADER ========== -->
   <section class="dashboard-header">
     <div class="header-top">
       <h1>📊 Survey Results Dashboard</h1>
@@ -25,7 +26,7 @@
     </div>
   </section>
 
-  <!-- SUMMARY METRICS CARDS -->
+  <!-- ========== SUMMARY METRICS CARDS ========== -->
   <section class="metrics-dashboard">
     <div class="metric-card">
       <div class="metric-icon">👥</div>
@@ -64,7 +65,7 @@
     </div>
   </section>
 
-  <!-- CONTROLS & STATUS -->
+  <!-- ========== CONTROLS & STATUS ========== -->
   <section class="dashboard-controls">
     <div class="controls-left">
       <button id="syncButton" class="btn-sync" style="background: #10b981; color: white; padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; margin-right: 8px;">🔗 Sync Google Sheet</button>
@@ -77,19 +78,19 @@
     </div>
   </section>
 
-  <!-- DESCRIPTIVE STATISTICS SECTION -->
+  <!-- ========== SECTION 1: DESCRIPTIVE STATISTICS ========== -->
   <section class="dashboard-section descriptive-section">
     <h2 class="section-title">📈 SECTION 1: DESCRIPTIVE STATISTICS ANALYSIS</h2>
     <div id="descriptiveStatsChart" class="section-content"></div>
   </section>
 
-  <!-- DEMOGRAPHICS SECTION -->
+  <!-- ========== SECTION 2: DEMOGRAPHICS ========== -->
   <section class="dashboard-section demographics-section">
     <h2 class="section-title">👥 SECTION 2: DEMOGRAPHICS & RESPONDENT PROFILE</h2>
     <div id="demographicsCharts" class="section-content"></div>
   </section>
 
-  <!-- REGRESSION & CORRELATION SECTION -->
+  <!-- ========== SECTION 3: REGRESSION & CORRELATION ========== -->
   <section class="dashboard-section regression-section">
     <h2 class="section-title">📉 SECTION 3: REGRESSION & CORRELATION ANALYSIS</h2>
     <div class="section-grid">
@@ -98,7 +99,7 @@
     </div>
   </section>
 
-  <!-- ANOVA & CHI-SQUARE SECTION -->
+  <!-- ========== SECTION 4: STATISTICAL TESTS (ANOVA & CHI-SQUARE) ========== -->
   <section class="dashboard-section anova-section">
     <h2 class="section-title">🔬 SECTION 4: STATISTICAL TESTS (ANOVA & CHI-SQUARE)</h2>
     <div class="section-grid">
@@ -107,7 +108,7 @@
     </div>
   </section>
 
-  <!-- AWARENESS & PERCEPTION SECTION -->
+  <!-- ========== SECTION 5: AWARENESS & PERCEPTION ========== -->
   <section class="dashboard-section awareness-section">
     <h2 class="section-title">💡 SECTION 5: AWARENESS & PERCEPTION SURVEYS</h2>
     <div class="section-grid">
@@ -116,11 +117,35 @@
     </div>
   </section>
 
-  <!-- FOOTER -->
-  <section class="dashboard-footer">
-    <p>Statistical Survey Analysis using Descriptive Statistics, Regression, Correlation, ANOVA, and Chi-Square Tests</p>
-    <p class="timestamp-footer">Last Generated: <span id="generatedTime">-</span></p>
+  <!-- ========== ✨ NEW SECTION 6: HYPOTHESIS TESTING ========== -->
+  <section class="dashboard-section hypothesis-section">
+    <h2 class="section-title">🔬 SECTION 6: HYPOTHESIS TESTING & STATISTICAL SIGNIFICANCE</h2>
+    <div id="hypothesisChart" class="section-content">
+      <p class="loading-text">Waiting for data...</p>
+    </div>
   </section>
+
+  <!-- ========== ✨ NEW SECTION 7: QUALITATIVE INSIGHTS ========== -->
+  <section class="dashboard-section qualitative-section">
+    <h2 class="section-title">📝 SECTION 7: QUALITATIVE INSIGHTS & SENTIMENT ANALYSIS</h2>
+    <div class="section-grid">
+      <div id="sentimentChart" class="section-chart">
+        <p class="loading-text">Waiting for sentiment data...</p>
+      </div>
+      <div id="freqChart" class="section-chart">
+        <p class="loading-text">Waiting for frequency data...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <section class="dashboard-footer">
+    <p>Statistical Survey Analysis using Descriptive Statistics, Regression, Correlation, ANOVA, Chi-Square & T-Tests</p>
+    <p class="timestamp-footer">Last Generated: <span id="generatedTime">-</span></p>
+    <!-- Analysis metadata will be injected here by JavaScript -->
+    <div id="analysisFooter" class="analysis-metadata"></div>
+  </section>
+
 </div>
 {% endblock %}
 

@@ -959,3 +959,103 @@ footer {
     width: 100%;
   }
 }
+/* === New Section Styling === */
+.hypothesis-section .section-title {
+  border-left: 4px solid #3b82f6;
+  padding-left: 12px;
+  color: #1e3a5f;
+  background: linear-gradient(90deg, #eff6ff 0%, transparent 100%);
+}
+
+.qualitative-section .section-title {
+  border-left: 4px solid #8b5cf6;
+  padding-left: 12px;
+  color: #37306b;
+  background: linear-gradient(90deg, #f5f3ff 0%, transparent 100%);
+}
+
+/* === Loading Text === */
+.loading-text {
+  color: #64748b;
+  font-style: italic;
+  padding: 20px;
+  text-align: center;
+}
+
+/* === Stats Card for T-Test Results === */
+.stats-card {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 20px;
+  border-radius: 12px;
+  border-left: 4px solid #3b82f6;
+  margin: 10px 0;
+}
+
+.stats-card h4 {
+  margin: 0 0 15px 0;
+  color: #1e293b;
+}
+
+.stat-box {
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.p-value {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 0.9em;
+}
+
+.badge.success { background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; }
+.badge.warning { background: #f59e0b; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; }
+
+/* === Sentiment Cards === */
+.sentiment-card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-left: 4px solid;
+}
+.sentiment-card.very-positive { border-color: #10b981; }
+.sentiment-card.positive { border-color: #3b82f6; }
+.sentiment-card.neutral { border-color: #f59e0b; }
+.sentiment-card.negative { border-color: #ef4444; }
+
+/* === Frequency Table === */
+.freq-table {
+  width: 100%;
+  font-size: 0.85em;
+  border-collapse: collapse;
+}
+.freq-table th, .freq-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+}
+.freq-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* === Responsive Grid === */
+@media (max-width: 900px) {
+  .section-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* === Hover Effects === */
+.stats-card:hover, .sentiment-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12) !important;
+  transition: all 0.2s ease;
+}
